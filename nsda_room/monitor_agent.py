@@ -118,24 +118,33 @@ class MonitorAgent:
         """Login to the server and get auth token."""
         logger.info("Authenticating with server...")
         try:
-            # Try session-based auth first
+            # 1. First GET to receive the CSRF cookie
+            self.session.get(f"{self.server_url}/accounts/login/")
+            csrf = self.session.cookies.get('csrftoken', '')
+            
+            # 2. Update headers with CSRF
+            self.session.headers.update({
+                'X-CSRFToken': csrf,
+                'Referer': f"{self.server_url}/accounts/login/",
+            })
+
+            # 3. POST login
             resp = self.session.post(
                 f"{self.server_url}/accounts/login/",
                 data={
                     'username': self.config['username'],
                     'password': self.config['password'],
+                    'csrfmiddlewaretoken': csrf,
                 },
                 allow_redirects=False,
             )
 
-            # Get CSRF token
-            csrf = self.session.cookies.get('csrftoken', '')
-            self.session.headers.update({
-                'X-CSRFToken': csrf,
-                'Referer': self.server_url,
-            })
-
             if resp.status_code in (200, 302):
+                # Refresh CSRF token after login (Django rotates it)
+                new_csrf = self.session.cookies.get('csrftoken', '')
+                if new_csrf:
+                    self.session.headers.update({'X-CSRFToken': new_csrf})
+                
                 logger.info("Authentication successful!")
                 return True
             else:
@@ -204,9 +213,9 @@ class MonitorAgent:
                     data=data,
                 )
                 if resp.status_code == 201:
-                    logger.info("Screenshot uploaded successfully.")
+                    logger.info(f"Screenshot taken and uploaded successfully. (Interval: {self.config['screenshot_interval']}s)")
                 else:
-                    logger.warning(f"Screenshot upload failed: {resp.status_code}")
+                    logger.warning(f"Screenshot upload failed: {resp.status_code} - {resp.text}")
 
         except Exception as e:
             logger.error(f"Screenshot error: {e}")

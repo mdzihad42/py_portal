@@ -6,6 +6,7 @@ from django.db.models import Sum, Avg, Count, Q
 from django.db.models.functions import TruncDate, TruncHour
 from django.utils import timezone
 from datetime import timedelta
+import os
 
 from accounts.models import User
 from accounts.mixins import TeacherOrAdminRequiredMixin
@@ -19,6 +20,17 @@ class MonitoringDashboardView(TeacherOrAdminRequiredMixin, View):
     """Main monitoring dashboard for teachers."""
 
     def get(self, request):
+        # Automatic Cleanup: Delete screenshots older than 24 hours
+        threshold = timezone.now() - timedelta(hours=24)
+        old_ss = Screenshot.objects.filter(captured_at__lt=threshold)
+        for ss in old_ss:
+            if ss.image and os.path.isfile(ss.image.path):
+                try:
+                    os.remove(ss.image.path)
+                except:
+                    pass
+            ss.delete()
+
         students = User.objects.filter(role='student').order_by('first_name', 'username')
 
         # Active sessions
@@ -110,6 +122,11 @@ class StudentMonitoringDetailView(TeacherOrAdminRequiredMixin, View):
             count=Count('id')
         ).order_by('date')
 
+        # Detailed activity timeline
+        recent_activity = AppUsage.objects.filter(
+            student=student, start_time__gte=since
+        ).order_by('-start_time')[:50]
+
         # Alerts
         alerts = ActivityAlert.objects.filter(
             student=student, created_at__gte=since
@@ -119,6 +136,7 @@ class StudentMonitoringDetailView(TeacherOrAdminRequiredMixin, View):
             'student': student,
             'screenshots': screenshots,
             'app_usage': app_usage,
+            'recent_activity': recent_activity,
             'total_active_minutes': total_active // 60,
             'total_idle_minutes': total_idle // 60,
             'keyboard_data': list(keyboard_data),
@@ -178,3 +196,107 @@ class ReviewAlertView(TeacherOrAdminRequiredMixin, View):
         alert.save()
         from django.shortcuts import redirect
         return redirect('monitoring:alerts')
+
+
+class DownloadConfigView(LoginRequiredMixin, View):
+    """Serve a dynamically generated config file for the student."""
+
+    def get(self, request):
+        config = {
+            "server_url": request.build_absolute_uri('/')[:-1],
+            "username": request.user.username,
+            "password": "CHANGE_TO_YOUR_PASSWORD",
+            "screenshot_interval": 300,
+            "app_tracking_interval": 30,
+            "keyboard_report_interval": 300,
+            "idle_threshold": 120
+        }
+        import json
+        from django.http import HttpResponse
+        response = HttpResponse(
+            json.dumps(config, indent=2), 
+            content_type='application/json'
+        )
+        response['Content-Disposition'] = 'attachment; filename="monitor_config.json"'
+        return response
+
+
+class DownloadAgentView(LoginRequiredMixin, View):
+    """Serve the monitor_agent.py script file."""
+
+    def get(self, request):
+        import os
+        from django.conf import settings
+        from django.http import FileResponse
+        
+        # Path to the agent script in the project root
+        file_path = os.path.join(settings.BASE_DIR, 'monitor_agent.py')
+        if os.path.exists(file_path):
+            return FileResponse(
+                open(file_path, 'rb'), 
+                content_type='application/x-python',
+                as_attachment=True,
+                filename='monitor_agent.py'
+            )
+class DownloadPackageView(LoginRequiredMixin, View):
+    """Serve a ZIP package containing the agent, config, and an installer bat file."""
+
+    def get(self, request):
+        import io
+        import zipfile
+        import json
+        import os
+        from django.conf import settings
+        from django.http import HttpResponse
+
+        # 1. Prepare Config
+        config = {
+            "server_url": request.build_absolute_uri('/')[:-1],
+            "username": request.user.username,
+            "password": "CHANGE_TO_YOUR_PASSWORD",
+            "screenshot_interval": 300,
+            "app_tracking_interval": 30,
+            "keyboard_report_interval": 300,
+            "idle_threshold": 120
+        }
+
+        # 2. Create ZIP in memory
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zip_file:
+            # Add monitor_agent.py
+            agent_path = os.path.join(settings.BASE_DIR, 'monitor_agent.py')
+            if os.path.exists(agent_path):
+                zip_file.write(agent_path, 'monitor_agent.py')
+            
+            # Add monitor_config.json
+            zip_file.writestr('monitor_config.json', json.dumps(config, indent=2))
+            
+            # Add setup.bat (The magic installer)
+            bat_content = f"""@echo off
+echo ==========================================
+echo    NSDA Monitoring One-Time Setup
+echo ==========================================
+echo.
+echo [1/3] Installing dependencies...
+pip install requests mss pillow psutil pywin32 pynput --quiet
+
+echo [2/3] Setting up Auto-Startup...
+set SCRIPT_PATH=%~dp0monitor_agent.py
+reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "NSDAMonitor" /t REG_SZ /d "pythonw.exe \\"%SCRIPT_PATH%\\"" /f > nul
+
+echo [3/3] Starting background agent...
+start pythonw.exe "%SCRIPT_PATH%"
+
+echo.
+echo ==========================================
+echo    Setup Complete! 
+echo    Monitoring will now run automatically.
+echo ==========================================
+echo.
+pause
+"""
+            zip_file.writestr('setup_monitor.bat', bat_content)
+
+        response = HttpResponse(buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="nsda_monitor_setup.zip"'
+        return response

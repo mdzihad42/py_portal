@@ -80,9 +80,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, content):
         from .models import ChatRoom, Message
+        from notifications.models import Notification
         room = ChatRoom.objects.get(pk=self.room_id)
-        return Message.objects.create(
+        msg = Message.objects.create(
             room=room,
             sender=self.user,
             content=content,
         )
+        
+        # Create notifications for other participants
+        for participant in room.participants.exclude(pk=self.user.pk):
+            Notification.objects.create(
+                user=participant,
+                title=f"Message in {room.name}",
+                message=f"{self.user.get_full_name() or self.user.username}: {content[:50]}...",
+                notification_type=Notification.Type.CHAT,
+                link=f"/chat/room/{room.pk}/"
+            )
+        return msg

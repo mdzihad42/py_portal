@@ -11,23 +11,21 @@ from .forms import (
     ProfileUpdateForm, CustomLoginForm,
 )
 from .models import User
-from .mixins import AdminRequiredMixin
+from .mixins import AdminRequiredMixin, TeacherOrAdminRequiredMixin
 
 
 class RegisterView(View):
-    """Handle user registration with role selection."""
+    """Handle teacher registration."""
 
     def get(self, request):
-        role = request.GET.get('role', 'student')
-        form = self._get_form(role)
+        form = TeacherRegistrationForm()
         return render(request, 'accounts/register.html', {
             'form': form,
-            'role': role,
+            'role': 'teacher',
         })
 
     def post(self, request):
-        role = request.POST.get('role', 'student')
-        form = self._get_form(role, data=request.POST, files=request.FILES)
+        form = TeacherRegistrationForm(data=request.POST, files=request.FILES)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -35,13 +33,24 @@ class RegisterView(View):
             return redirect('portal:dashboard')
         return render(request, 'accounts/register.html', {
             'form': form,
-            'role': role,
+            'role': 'teacher',
         })
 
-    def _get_form(self, role, **kwargs):
-        if role == 'teacher':
-            return TeacherRegistrationForm(**kwargs)
-        return StudentRegistrationForm(**kwargs)
+
+class StudentCreateView(TeacherOrAdminRequiredMixin, View):
+    """Teacher creates a student profile."""
+    
+    def get(self, request):
+        form = StudentRegistrationForm()
+        return render(request, 'accounts/student_create.html', {'form': form})
+        
+    def post(self, request):
+        form = StudentRegistrationForm(data=request.POST, files=request.FILES)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f'Student {user.username} created successfully!')
+            return redirect('accounts:user_list')
+        return render(request, 'accounts/student_create.html', {'form': form})
 
 
 class LoginView(View):
@@ -101,7 +110,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class UserListView(AdminRequiredMixin, ListView):
+class UserListView(TeacherOrAdminRequiredMixin, ListView):
     """Admin view: list all users."""
     model = User
     template_name = 'accounts/user_list.html'

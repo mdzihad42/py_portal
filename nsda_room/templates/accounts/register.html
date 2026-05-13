@@ -14,15 +14,10 @@
         <div class="auth-logo">
             <div class="logo">N</div>
             <h1>Create Account</h1>
-            <p class="subtitle">Join the NSDA Portal as a {{ role|title }}</p>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:24px;justify-content:center;">
-            <a href="?role=student" class="btn {% if role == 'student' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Student</a>
-            <a href="?role=teacher" class="btn {% if role == 'teacher' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Teacher</a>
+            <p class="subtitle">Join the NSDA Portal as a Teacher</p>
         </div>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            <input type="hidden" name="role" value="{{ role }}">
             {% for field in form %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>

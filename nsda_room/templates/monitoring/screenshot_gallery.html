@@ -3,7 +3,15 @@
 {% block page_title %}Screenshots: {{ student.get_full_name|default:student.username }}{% endblock %}
 {% block content %}
 <div class="screenshot-grid">
-{% for ss in screenshots %}<div class="screenshot-item"><img src="{{ ss.image.url }}" alt="Screenshot"><div class="meta">{{ ss.captured_at|date:"M d, Y H:i" }}</div></div>{% empty %}<div class="empty-state"><div class="icon"><i class="fas fa-camera"></i></div><h3>No screenshots</h3></div>{% endfor %}
+    {% for ss in screenshots %}
+    <div class="screenshot-item">
+        <a href="{{ ss.image.url }}" target="_blank"><img src="{{ ss.image.url }}" alt="Screenshot"></a>
+        <div class="meta">
+            <i class="far fa-clock"></i> <strong>{{ ss.captured_at|date:"h:i A" }}</strong>
+            <div class="text-xs">{{ ss.captured_at|date:"d M, Y" }}</div>
+        </div>
+    </div>
+    {% empty %}<p class="text-muted">No screenshots captured.</p>{% endfor %}
 </div>
 {% if is_paginated %}<div class="pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">&laquo;</a>{% endif %}<span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">&raquo;</a>{% endif %}</div>{% endif %}
 <a href="{% url 'monitoring:student_detail' student.pk %}" class="btn btn-secondary mt-16"><i class="fas fa-arrow-left"></i> Back</a>
