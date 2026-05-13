@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Chat — NSDA Portal{% endblock %}
+{% block page_title %}Messages{% endblock %}
+{% block content %}
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header"><h3>Start New Chat</h3></div>
+        <div class="card-body">
+            <form method="post" action="{% url 'chat:create_room' %}">{% csrf_token %}
+                <div class="form-group"><label>Select User</label><select name="participants" class="form-control">{% for u in available_users %}<option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }} ({{ u.get_role_display }})</option>{% endfor %}</select></div>
+                <div class="form-group"><label>Room Name (optional)</label><input type="text" name="room_name" class="form-control" placeholder="Chat name..."></div>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Start Chat</button>
+            </form>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3>My Conversations</h3></div>
+        <div class="card-body">
+            {% for room in rooms %}
+            <a href="{% url 'chat:room' room.pk %}" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;margin-bottom:4px;transition:var(--transition);color:var(--text-primary);" onmouseover="this.style.background='var(--bg-glass)'" onmouseout="this.style.background='transparent'">
+                <div class="user-avatar" style="width:40px;height:40px;font-size:14px;">{{ room.name|first|upper }}</div>
+                <div style="flex:1;"><div style="font-weight:600;font-size:14px;">{{ room.name }}</div><span class="text-sm text-muted">{{ room.room_type|title }}</span></div>
+            </a>
+            {% empty %}<p class="text-muted">No conversations yet. Start one!</p>{% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — NSDA Portal{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-users"></i></div><div class="stat-value">{{ total_users }}</div><div class="stat-label">Total Users</div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-user-graduate"></i></div><div class="stat-value">{{ total_students }}</div><div class="stat-label">Students</div></div>
+    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-chalkboard-teacher"></i></div><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">Teachers</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-gavel"></i></div><div class="stat-value">{{ total_debates }}</div><div class="stat-label">Total Debates</div></div>
+</div>
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header"><h3><i class="fas fa-user-plus" style="color:var(--accent-light);margin-right:8px;"></i>Recent Users</h3><a href="{% url 'accounts:user_list' %}" class="btn btn-sm btn-secondary">View All</a></div>
+        <div class="card-body table-container">
+            <table><thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead><tbody>
+            {% for u in recent_users %}
+            <tr><td><strong>{{ u.get_full_name|default:u.username }}</strong></td><td><span class="badge badge-{% if u.role == 'admin' %}danger{% elif u.role == 'teacher' %}warning{% else %}primary{% endif %}">{{ u.get_role_display }}</span></td><td class="text-muted">{{ u.date_joined|date:"M d" }}</td></tr>
+            {% endfor %}
+            </tbody></table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3><i class="fas fa-gavel" style="color:var(--success);margin-right:8px;"></i>Recent Debates</h3></div>
+        <div class="card-body">
+            {% for d in recent_debates %}
+            <div style="padding:10px 0;border-bottom:1px solid var(--border-color);">
+                <a href="{% url 'debates:detail' d.pk %}" style="font-weight:600;">{{ d.title }}</a><br>
+                <span class="text-sm text-muted">{{ d.date|date:"M d, Y" }} · by {{ d.created_by.get_full_name|default:d.created_by.username }}</span>
+            </div>
+            {% empty %}<p class="text-muted">No debates yet.</p>{% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Activity Alerts — NSDA Portal{% endblock %}
+{% block page_title %}Activity Alerts{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:20px;">
+    <a href="{% url 'monitoring:alerts' %}" class="btn btn-sm btn-secondary">All</a>
+    <a href="?reviewed=false" class="btn btn-sm btn-secondary">Unreviewed</a>
+    <a href="?type=inactivity" class="btn btn-sm btn-secondary">Inactivity</a>
+    <a href="?type=high_deletion" class="btn btn-sm btn-secondary">High Deletion</a>
+    <a href="?type=unknown_app" class="btn btn-sm btn-secondary">Unknown Apps</a>
+</div>
+<div class="card">
+    <div class="card-body table-container">
+        <table><thead><tr><th>Student</th><th>Type</th><th>Message</th><th>Time</th><th>Status</th><th>Action</th></tr></thead><tbody>
+        {% for a in alerts %}
+        <tr>
+            <td><a href="{% url 'monitoring:student_detail' a.student.pk %}">{{ a.student.get_full_name|default:a.student.username }}</a></td>
+            <td><span class="badge badge-{% if a.alert_type == 'inactivity' %}warning{% elif a.alert_type == 'high_deletion' %}danger{% else %}info{% endif %}">{{ a.get_alert_type_display }}</span></td>
+            <td class="text-sm">{{ a.message|truncatewords:15 }}</td>
+            <td class="text-muted text-sm">{{ a.created_at|date:"M d, H:i" }}</td>
+            <td>{% if a.is_reviewed %}<span class="badge badge-success">Reviewed</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+            <td>{% if not a.is_reviewed %}<form method="post" action="{% url 'monitoring:review_alert' a.pk %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check"></i></button></form>{% endif %}</td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No alerts.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</div>
+{% endblock %}

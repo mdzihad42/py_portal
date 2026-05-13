@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit{% else %}Create{% endif %} Debate — NSDA Portal{% endblock %}
+{% block page_title %}{% if object %}Edit Debate{% else %}Create Debate{% endif %}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:650px;">
+    <div class="card-header"><h3>{% if object %}Edit "{{ object.title }}"{% else %}New Debate{% endif %}</h3></div>
+    <div class="card-body">
+        <form method="post">{% csrf_token %}
+            {% for field in form %}<div class="form-group"><label>{{ field.label }}</label>{{ field }}{% for e in field.errors %}<div class="form-error">{{ e }}</div>{% endfor %}</div>{% endfor %}
+            <div style="display:flex;gap:12px;margin-top:24px;">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> {% if object %}Update{% else %}Create{% endif %}</button>
+                <a href="{% url 'debates:list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

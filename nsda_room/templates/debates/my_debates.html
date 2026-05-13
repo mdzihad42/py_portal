@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}My Debates — NSDA Portal{% endblock %}
+{% block page_title %}My Debates{% endblock %}
+{% block content %}
+{% for reg in registrations %}
+<div class="card mb-16"><div class="card-body" style="display:flex;justify-content:space-between;align-items:center;">
+    <div><a href="{% url 'debates:detail' reg.debate.pk %}" style="font-weight:600;font-size:16px;">{{ reg.debate.title }}</a><br><span class="text-sm text-muted">{{ reg.debate.date|date:"M d, Y" }} · {{ reg.debate.get_format_display }} · Team: {{ reg.get_team_display }}</span></div>
+    <span class="badge badge-{% if reg.debate.status == 'upcoming' %}info{% elif reg.debate.status == 'completed' %}success{% else %}warning{% endif %}">{{ reg.debate.get_status_display }}</span>
+</div></div>
+{% empty %}<div class="empty-state"><div class="icon"><i class="fas fa-gavel"></i></div><h3>No registered debates</h3><p><a href="{% url 'debates:list' %}">Browse debates</a></p></div>{% endfor %}
+{% endblock %}

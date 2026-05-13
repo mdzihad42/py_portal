@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Assignments — NSDA Portal{% endblock %}
+{% block page_title %}Assignments{% endblock %}
+{% block content %}
+{% if request.user.is_teacher or request.user.is_admin_user %}
+<div class="mb-24"><a href="{% url 'portal:assignment_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> New Assignment</a></div>
+{% endif %}
+<div class="card">
+    <div class="card-body table-container">
+        <table><thead><tr><th>Assignment</th><th>Due Date</th><th>Max Score</th><th>Status</th><th>Action</th></tr></thead><tbody>
+        {% for a in assignments %}
+        <tr>
+            <td><a href="{% url 'portal:assignment_detail' a.pk %}" style="font-weight:600;">{{ a.title }}</a><br><span class="text-sm text-muted">By {{ a.created_by.get_full_name|default:a.created_by.username }}</span></td>
+            <td>{{ a.due_date|date:"M d, Y H:i" }}</td>
+            <td>{{ a.max_score }}</td>
+            <td>{% if request.user.is_student %}{% if a.pk in submitted_ids %}<span class="badge badge-success">Submitted</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}{% else %}<span class="badge badge-info">{{ a.submissions.count }} submissions</span>{% endif %}</td>
+            <td><a href="{% url 'portal:assignment_detail' a.pk %}" class="btn btn-sm btn-secondary">View</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="text-center text-muted" style="padding:40px;">No assignments yet.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</div>
+{% endblock %}

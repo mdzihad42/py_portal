@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Notifications — NSDA Portal{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div class="flex-between mb-24">
+    <span class="text-muted">{{ notifications|length }} notifications</span>
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-secondary"><i class="fas fa-check-double"></i> Mark All Read</button></form>
+</div>
+{% for n in notifications %}
+<div class="card mb-16" style="{% if not n.is_read %}border-left:3px solid var(--accent);{% endif %}">
+    <div class="card-body" style="display:flex;align-items:center;gap:16px;">
+        <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;
+            {% if n.notification_type == 'debate' %}background:rgba(99,102,241,0.15);color:var(--accent-light);
+            {% elif n.notification_type == 'result' %}background:rgba(16,185,129,0.15);color:var(--success);
+            {% elif n.notification_type == 'assignment' %}background:rgba(245,158,11,0.15);color:var(--warning);
+            {% elif n.notification_type == 'chat' %}background:rgba(6,182,212,0.15);color:var(--info);
+            {% else %}background:var(--bg-glass);color:var(--text-muted);{% endif %}">
+            <i class="fas fa-{% if n.notification_type == 'debate' %}gavel{% elif n.notification_type == 'result' %}trophy{% elif n.notification_type == 'assignment' %}tasks{% elif n.notification_type == 'chat' %}comment{% elif n.notification_type == 'notice' %}bullhorn{% else %}bell{% endif %}"></i>
+        </div>
+        <div style="flex:1;">
+            <strong{% if not n.is_read %} style="color:var(--text-primary);"{% endif %}>{{ n.title }}</strong>
+            <p class="text-sm text-muted" style="margin-top:2px;">{{ n.message }}</p>
+        </div>
+        <div style="text-align:right;">
+            <div class="text-sm text-muted">{{ n.created_at|timesince }} ago</div>
+            {% if not n.is_read %}<form method="post" action="{% url 'notifications:mark_read' n.pk %}" style="margin-top:4px;">{% csrf_token %}<button type="submit" class="btn btn-sm btn-secondary">Read</button></form>{% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}<div class="empty-state"><div class="icon"><i class="fas fa-bell-slash"></i></div><h3>No notifications</h3></div>{% endfor %}
+{% endblock %}

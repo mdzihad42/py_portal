@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}All Users — NSDA Portal{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>All Users ({{ users|length }})</h3>
+        <div style="display:flex;gap:8px;">
+            <a href="?role=" class="btn btn-sm {% if not role_filter %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+            <a href="?role=student" class="btn btn-sm {% if role_filter == 'student' %}btn-primary{% else %}btn-secondary{% endif %}">Students</a>
+            <a href="?role=teacher" class="btn btn-sm {% if role_filter == 'teacher' %}btn-primary{% else %}btn-secondary{% endif %}">Teachers</a>
+            <a href="?role=admin" class="btn btn-sm {% if role_filter == 'admin' %}btn-primary{% else %}btn-secondary{% endif %}">Admins</a>
+        </div>
+    </div>
+    <div class="card-body table-container">
+        <table>
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>School</th><th>Joined</th></tr></thead>
+            <tbody>
+            {% for u in users %}
+            <tr>
+                <td><strong>{{ u.get_full_name|default:u.username }}</strong><br><span class="text-sm text-muted">@{{ u.username }}</span></td>
+                <td>{{ u.email|default:"—" }}</td>
+                <td><span class="badge badge-{% if u.role == 'admin' %}danger{% elif u.role == 'teacher' %}warning{% else %}primary{% endif %}">{{ u.get_role_display }}</span></td>
+                <td>{{ u.school|default:"—" }}</td>
+                <td class="text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted" style="padding:40px;">No users found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if is_paginated %}
+<div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&role={{ role_filter }}">&laquo; Prev</a>{% endif %}
+    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&role={{ role_filter }}">Next &raquo;</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

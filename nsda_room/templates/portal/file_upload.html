@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Upload File — NSDA Portal{% endblock %}
+{% block page_title %}Upload File{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;">
+    <div class="card-header"><h3>Share a File</h3></div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">{% csrf_token %}
+            {% for field in form %}
+            <div class="form-group"><label>{{ field.label }}</label>{{ field }}{% for e in field.errors %}<div class="form-error">{{ e }}</div>{% endfor %}</div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

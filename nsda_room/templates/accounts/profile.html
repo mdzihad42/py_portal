@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Profile — NSDA Portal{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block content %}
+<div class="grid-2">
+    <div class="card">
+        <div class="card-body" style="text-align:center;padding:40px;">
+            <div class="user-avatar" style="width:80px;height:80px;font-size:28px;margin:0 auto 16px;">
+                {% if profile_user.profile_picture %}
+                    <img src="{{ profile_user.profile_picture.url }}" alt="avatar">
+                {% else %}
+                    {{ profile_user.first_name|first|default:profile_user.username|first|upper }}
+                {% endif %}
+            </div>
+            <h2 style="margin-bottom:4px;">{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+            <span class="badge badge-primary">{{ profile_user.get_role_display }}</span>
+            <div style="margin-top:20px;">
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-secondary"><i class="fas fa-edit"></i> Edit Profile</a>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3>Profile Information</h3></div>
+        <div class="card-body">
+            <table>
+                <tr><td style="color:var(--text-muted);width:140px;">Username</td><td>{{ profile_user.username }}</td></tr>
+                <tr><td style="color:var(--text-muted);">Email</td><td>{{ profile_user.email|default:"—" }}</td></tr>
+                <tr><td style="color:var(--text-muted);">Phone</td><td>{{ profile_user.phone|default:"—" }}</td></tr>
+                <tr><td style="color:var(--text-muted);">School</td><td>{{ profile_user.school|default:"—" }}</td></tr>
+                <tr><td style="color:var(--text-muted);">Grade Level</td><td>{{ profile_user.grade_level|default:"—" }}</td></tr>
+                <tr><td style="color:var(--text-muted);">Date of Birth</td><td>{{ profile_user.date_of_birth|default:"—" }}</td></tr>
+                <tr><td style="color:var(--text-muted);">Joined</td><td>{{ profile_user.date_joined|date:"M d, Y" }}</td></tr>
+            </table>
+            {% if profile_user.bio %}
+            <div style="margin-top:16px;">
+                <strong style="color:var(--text-muted);font-size:13px;">Bio</strong>
+                <p style="margin-top:6px;">{{ profile_user.bio }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

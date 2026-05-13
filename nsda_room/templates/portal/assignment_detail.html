@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ assignment.title }} — NSDA Portal{% endblock %}
+{% block page_title %}Assignment Detail{% endblock %}
+{% block content %}
+<div class="card mb-24">
+    <div class="card-header"><h3>{{ assignment.title }}</h3><span class="badge badge-info">Max: {{ assignment.max_score }}</span></div>
+    <div class="card-body">
+        <div class="meta mb-16" style="color:var(--text-muted);font-size:13px;">By {{ assignment.created_by.get_full_name }} · Due: {{ assignment.due_date|date:"M d, Y H:i" }}</div>
+        <p>{{ assignment.description|linebreaksbr }}</p>
+        {% if assignment.attached_file %}<div class="mt-16"><a href="{{ assignment.attached_file.url }}" class="btn btn-sm btn-secondary" download><i class="fas fa-download"></i> Download Attachment</a></div>{% endif %}
+    </div>
+</div>
+{% if request.user.is_student %}
+    {% if submission %}
+    <div class="card">
+        <div class="card-header"><h3>Your Submission</h3><span class="badge {% if submission.is_graded %}badge-success{% else %}badge-warning{% endif %}">{% if submission.is_graded %}Graded: {{ submission.grade }}/{{ assignment.max_score }}{% else %}Pending{% endif %}</span></div>
+        <div class="card-body">
+            <p>Submitted: {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+            {% if submission.comment %}<p>{{ submission.comment }}</p>{% endif %}
+            {% if submission.feedback %}<div class="mt-16" style="padding:16px;background:rgba(16,185,129,0.1);border-radius:8px;"><strong style="color:var(--success);">Teacher Feedback:</strong><p class="mt-16">{{ submission.feedback }}</p></div>{% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-header"><h3>Submit Assignment</h3></div>
+        <div class="card-body">
+            <form method="post" action="{% url 'portal:assignment_submit' assignment.pk %}" enctype="multipart/form-data">{% csrf_token %}
+                {% for field in submit_form %}
+                <div class="form-group"><label>{{ field.label }}</label>{{ field }}</div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+{% if request.user.is_teacher or request.user.is_admin_user %}
+<div class="card">
+    <div class="card-header"><h3>Submissions ({{ submissions|length }})</h3></div>
+    <div class="card-body table-container">
+        <table><thead><tr><th>Student</th><th>Submitted</th><th>File</th><th>Grade</th><th>Action</th></tr></thead><tbody>
+        {% for sub in submissions %}
+        <tr>
+            <td>{{ sub.student.get_full_name|default:sub.student.username }}</td>
+            <td class="text-muted">{{ sub.submitted_at|date:"M d, H:i" }}</td>
+            <td><a href="{{ sub.file.url }}" class="btn btn-sm btn-secondary" download><i class="fas fa-download"></i></a></td>
+            <td>{% if sub.is_graded %}<span class="badge badge-success">{{ sub.grade }}/{{ assignment.max_score }}</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+            <td>
+                <form method="post" action="{% url 'portal:grade_submission' sub.pk %}" style="display:flex;gap:6px;align-items:center;">{% csrf_token %}
+                    <input type="number" name="grade" value="{{ sub.grade|default:'' }}" placeholder="Score" style="width:70px;padding:6px;" max="{{ assignment.max_score }}">
+                    <input type="text" name="feedback" value="{{ sub.feedback|default:'' }}" placeholder="Feedback" style="width:140px;padding:6px;">
+                    <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check"></i></button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="text-center text-muted">No submissions yet.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

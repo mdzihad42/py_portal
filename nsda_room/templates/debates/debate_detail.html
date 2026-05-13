@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ debate.title }} — NSDA Portal{% endblock %}
+{% block page_title %}Debate Detail{% endblock %}
+{% block content %}
+<div class="card mb-24">
+    <div class="card-header">
+        <h3>{{ debate.title }}</h3>
+        <div style="display:flex;gap:8px;">
+            <span class="badge badge-info">{{ debate.get_format_display }}</span>
+            <span class="badge badge-{% if debate.status == 'upcoming' %}success{% elif debate.status == 'completed' %}primary{% else %}warning{% endif %}">{{ debate.get_status_display }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="grid-2 mb-24">
+            <div><strong class="text-muted text-sm">Date & Time</strong><p>{{ debate.date|date:"F d, Y" }} at {{ debate.time|time:"H:i" }}</p></div>
+            <div><strong class="text-muted text-sm">Location</strong><p>{{ debate.location }}</p></div>
+            <div><strong class="text-muted text-sm">Participants</strong><p>{{ debate.registered_count }} / {{ debate.max_participants }} ({{ debate.spots_left }} spots left)</p></div>
+            <div><strong class="text-muted text-sm">Created By</strong><p>{{ debate.created_by.get_full_name|default:debate.created_by.username }}</p></div>
+        </div>
+        {% if debate.topic %}<div class="mb-24"><strong class="text-muted text-sm">Topic / Resolution</strong><p style="margin-top:6px;padding:16px;background:var(--bg-glass);border-radius:8px;border-left:3px solid var(--accent);">{{ debate.topic }}</p></div>{% endif %}
+        <div><strong class="text-muted text-sm">Description</strong><p style="margin-top:6px;">{{ debate.description|linebreaksbr }}</p></div>
+        {% if request.user.is_teacher or request.user.is_admin_user %}
+        <div style="display:flex;gap:8px;margin-top:20px;">
+            <a href="{% url 'debates:update' debate.pk %}" class="btn btn-secondary"><i class="fas fa-edit"></i> Edit</a>
+            <a href="{% url 'debates:delete' debate.pk %}" class="btn btn-danger"><i class="fas fa-trash"></i> Delete</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% if request.user.is_student and not is_registered and not debate.is_full and debate.status == 'upcoming' %}
+<div class="card mb-24">
+    <div class="card-header"><h3>Register for this Debate</h3></div>
+    <div class="card-body">
+        <form method="post" action="{% url 'debates:register' debate.pk %}">{% csrf_token %}
+            {% for field in register_form %}<div class="form-group"><label>{{ field.label }}</label>{{ field }}</div>{% endfor %}
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Register</button>
+        </form>
+    </div>
+</div>
+{% elif request.user.is_student and is_registered %}
+<div class="alert alert-success"><i class="fas fa-check-circle"></i> You are registered for this debate.
+    <form method="post" action="{% url 'debates:unregister' debate.pk %}" style="display:inline;margin-left:12px;">{% csrf_token %}<button type="submit" class="btn btn-sm btn-danger">Cancel Registration</button></form>
+</div>
+{% if my_result %}<div class="card mb-24"><div class="card-header"><h3>Your Result</h3></div><div class="card-body"><div style="font-size:32px;font-weight:800;color:var(--success);margin-bottom:8px;">{{ my_result.score }}</div>{% if my_result.rank %}<p>Rank: #{{ my_result.rank }}</p>{% endif %}{% if my_result.feedback %}<div style="margin-top:12px;padding:16px;background:var(--bg-glass);border-radius:8px;"><strong>Feedback:</strong><p>{{ my_result.feedback }}</p></div>{% endif %}</div></div>{% endif %}
+{% endif %}
+<div class="card mb-24">
+    <div class="card-header"><h3>Participants ({{ participants|length }})</h3></div>
+    <div class="card-body table-container">
+        <table><thead><tr><th>Student</th><th>Team</th><th>Registered</th></tr></thead><tbody>
+        {% for p in participants %}<tr><td>{{ p.student.get_full_name|default:p.student.username }}</td><td><span class="badge badge-primary">{{ p.get_team_display }}</span></td><td class="text-muted">{{ p.registered_at|date:"M d, H:i" }}</td></tr>{% empty %}<tr><td colspan="3" class="text-center text-muted">No participants yet.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</div>
+{% if request.user.is_teacher or request.user.is_admin_user %}
+<div class="card">
+    <div class="card-header"><h3>Results</h3></div>
+    <div class="card-body">
+        {% if participants %}
+        <form method="post" action="{% url 'debates:result_input' debate.pk %}">{% csrf_token %}
+            <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+                <div class="form-group" style="flex:1;min-width:150px;"><label>Student</label><select name="student_id" class="form-control">{% for p in participants %}<option value="{{ p.student.pk }}">{{ p.student.get_full_name|default:p.student.username }}</option>{% endfor %}</select></div>
+                {% for field in result_form %}<div class="form-group" style="flex:1;min-width:100px;"><label>{{ field.label }}</label>{{ field }}</div>{% endfor %}
+                <button type="submit" class="btn btn-primary" style="margin-bottom:20px;"><i class="fas fa-save"></i> Save</button>
+            </div>
+        </form>
+        {% endif %}
+        {% if results %}
+        <table class="mt-16"><thead><tr><th>Student</th><th>Score</th><th>Rank</th><th>Feedback</th></tr></thead><tbody>
+        {% for r in results %}<tr><td>{{ r.student.get_full_name|default:r.student.username }}</td><td style="font-weight:700;color:var(--success);">{{ r.score }}</td><td>{{ r.rank|default:"—" }}</td><td class="text-sm">{{ r.feedback|truncatewords:15|default:"—" }}</td></tr>{% endfor %}
+        </tbody></table>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

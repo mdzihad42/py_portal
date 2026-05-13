@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Files — NSDA Portal{% endblock %}
+{% block page_title %}Shared Files{% endblock %}
+{% block content %}
+<div class="mb-24"><a href="{% url 'portal:file_upload' %}" class="btn btn-primary"><i class="fas fa-upload"></i> Upload File</a></div>
+<div class="card">
+    <div class="card-body table-container">
+        <table><thead><tr><th>File</th><th>Type</th><th>Uploaded By</th><th>Date</th><th>Action</th></tr></thead><tbody>
+        {% for f in files %}
+        <tr>
+            <td><strong>{{ f.title }}</strong>{% if f.description %}<br><span class="text-sm text-muted">{{ f.description|truncatewords:10 }}</span>{% endif %}</td>
+            <td><span class="badge badge-info">{{ f.file_type }}</span></td>
+            <td>{{ f.uploaded_by.get_full_name|default:f.uploaded_by.username }}</td>
+            <td class="text-muted">{{ f.upload_date|date:"M d, Y" }}</td>
+            <td><a href="{{ f.file.url }}" class="btn btn-sm btn-secondary" download><i class="fas fa-download"></i></a></td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="text-center text-muted" style="padding:40px;">No files shared yet.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</div>
+{% endblock %}

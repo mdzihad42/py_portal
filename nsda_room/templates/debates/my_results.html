@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}My Results — NSDA Portal{% endblock %}
+{% block page_title %}My Results{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body table-container">
+    <table><thead><tr><th>Debate</th><th>Score</th><th>Rank</th><th>Feedback</th><th>Date</th></tr></thead><tbody>
+    {% for r in results %}
+    <tr><td><a href="{% url 'debates:detail' r.debate.pk %}" style="font-weight:600;">{{ r.debate.title }}</a></td><td style="font-weight:700;font-size:18px;color:var(--success);">{{ r.score }}</td><td>{{ r.rank|default:"—" }}</td><td class="text-sm">{{ r.feedback|truncatewords:15|default:"—" }}</td><td class="text-muted">{{ r.created_at|date:"M d, Y" }}</td></tr>
+    {% empty %}<tr><td colspan="5" class="text-center text-muted" style="padding:40px;">No results yet.</td></tr>{% endfor %}
+    </tbody></table>
+</div></div>
+{% endblock %}

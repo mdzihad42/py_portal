@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Debates — NSDA Portal{% endblock %}
+{% block page_title %}Debates{% endblock %}
+{% block content %}
+{% if request.user.is_teacher or request.user.is_admin_user %}
+<div class="mb-24"><a href="{% url 'debates:create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Create Debate</a></div>
+{% endif %}
+<div style="display:flex;gap:8px;margin-bottom:20px;">
+    <a href="{% url 'debates:list' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+    <a href="?status=upcoming" class="btn btn-sm {% if status_filter == 'upcoming' %}btn-primary{% else %}btn-secondary{% endif %}">Upcoming</a>
+    <a href="?status=in_progress" class="btn btn-sm {% if status_filter == 'in_progress' %}btn-primary{% else %}btn-secondary{% endif %}">In Progress</a>
+    <a href="?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-primary{% else %}btn-secondary{% endif %}">Completed</a>
+</div>
+{% for debate in debates %}
+<div class="card mb-16">
+    <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <h4><a href="{% url 'debates:detail' debate.pk %}">{{ debate.title }}</a></h4>
+            <div class="text-sm text-muted" style="margin-top:4px;">
+                <i class="fas fa-calendar"></i> {{ debate.date|date:"M d, Y" }} at {{ debate.time|time:"H:i" }} · <i class="fas fa-map-marker-alt"></i> {{ debate.location }} · <i class="fas fa-users"></i> {{ debate.registered_count }}/{{ debate.max_participants }}
+            </div>
+            <div style="margin-top:8px;"><span class="badge badge-info">{{ debate.get_format_display }}</span> <span class="badge badge-{% if debate.status == 'upcoming' %}success{% elif debate.status == 'completed' %}primary{% else %}warning{% endif %}">{{ debate.get_status_display }}</span></div>
+        </div>
+        <div style="text-align:right;">
+            {% if request.user.is_student %}{% if debate.pk in registered_ids %}<span class="badge badge-success"><i class="fas fa-check"></i> Registered</span>{% elif not debate.is_full %}<a href="{% url 'debates:detail' debate.pk %}" class="btn btn-sm btn-primary">Register</a>{% else %}<span class="badge badge-danger">Full</span>{% endif %}{% endif %}
+            {% if request.user.is_teacher or request.user.is_admin_user %}<a href="{% url 'debates:update' debate.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></a>{% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}<div class="empty-state"><div class="icon"><i class="fas fa-gavel"></i></div><h3>No debates found</h3></div>{% endfor %}
+{% if is_paginated %}<div class="pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">&laquo;</a>{% endif %}<span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">&raquo;</a>{% endif %}</div>{% endif %}
+{% endblock %}

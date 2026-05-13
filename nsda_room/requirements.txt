@@ -1,0 +1,10 @@
+django>=5.0
+djangorestframework>=3.14
+channels>=4.0
+daphne>=4.0
+Pillow>=10.0
+pynput>=1.7
+mss>=9.0
+pygetwindow>=0.0.9
+requests>=2.31
+reportlab>=4.0

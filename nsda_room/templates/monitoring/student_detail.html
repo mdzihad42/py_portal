@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ student.get_full_name }} — Monitoring{% endblock %}
+{% block page_title %}Monitoring: {{ student.get_full_name|default:student.username }}{% endblock %}
+{% block extra_css %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:20px;">
+    <a href="?days=1" class="btn btn-sm {% if days == 1 %}btn-primary{% else %}btn-secondary{% endif %}">Today</a>
+    <a href="?days=7" class="btn btn-sm {% if days == 7 %}btn-primary{% else %}btn-secondary{% endif %}">7 Days</a>
+    <a href="?days=30" class="btn btn-sm {% if days == 30 %}btn-primary{% else %}btn-secondary{% endif %}">30 Days</a>
+</div>
+<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-clock"></i></div><div class="stat-value">{{ total_active_minutes }}</div><div class="stat-label">Active Minutes</div></div>
+    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-moon"></i></div><div class="stat-value">{{ total_idle_minutes }}</div><div class="stat-label">Idle Minutes</div></div>
+    <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-camera"></i></div><div class="stat-value">{{ screenshots|length }}</div><div class="stat-label">Screenshots</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-value">{{ alerts|length }}</div><div class="stat-label">Alerts</div></div>
+</div>
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header"><h3>App Usage</h3></div>
+        <div class="card-body"><canvas id="appChart" height="250"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3>Active vs Idle</h3></div>
+        <div class="card-body"><canvas id="pieChart" height="250"></canvas></div>
+    </div>
+</div>
+<div class="card mt-16">
+    <div class="card-header"><h3>Keyboard Activity</h3></div>
+    <div class="card-body"><canvas id="kbChart" height="200"></canvas></div>
+</div>
+<div class="card mt-16">
+    <div class="card-header"><h3><i class="fas fa-camera" style="margin-right:8px;color:var(--accent-light);"></i>Recent Screenshots</h3><a href="{% url 'monitoring:screenshots' student.pk %}" class="btn btn-sm btn-secondary">View All</a></div>
+    <div class="card-body">
+        <div class="screenshot-grid">
+        {% for ss in screenshots %}
+        <div class="screenshot-item"><img src="{{ ss.image.url }}" alt="Screenshot"><div class="meta">{{ ss.captured_at|date:"M d, H:i" }}</div></div>
+        {% empty %}<p class="text-muted">No screenshots captured.</p>{% endfor %}
+        </div>
+    </div>
+</div>
+{% if alerts %}
+<div class="card mt-16">
+    <div class="card-header"><h3>Alerts</h3></div>
+    <div class="card-body">
+        {% for a in alerts %}
+        <div style="padding:10px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;">
+            <div><span class="badge badge-{% if a.alert_type == 'inactivity' %}warning{% else %}danger{% endif %}">{{ a.get_alert_type_display }}</span> <span class="text-sm">{{ a.message }}</span></div>
+            <span class="text-sm text-muted">{{ a.created_at|date:"M d, H:i" }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+const appL=[{% for a in app_labels %}'{{ a|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+const appD=[{% for d in app_durations %}{{ d }}{% if not forloop.last %},{% endif %}{% endfor %}];
+if(appL.length){new Chart(document.getElementById('appChart'),{type:'bar',data:{labels:appL,datasets:[{label:'Minutes',data:appD,backgroundColor:'rgba(99,102,241,0.5)',borderColor:'rgba(99,102,241,1)',borderWidth:1,borderRadius:6}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#94a3b8'},grid:{display:false}}}}});}
+new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{labels:['Active','Idle'],datasets:[{data:[{{ total_active_minutes }},{{ total_idle_minutes }}],backgroundColor:['rgba(16,185,129,0.7)','rgba(245,158,11,0.7)'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8'}}}}});
+const kbDates=[{% for k in keyboard_data %}'{{ k.date|date:"M d" }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+const kbKeys=[{% for k in keyboard_data %}{{ k.total_keys }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const kbDels=[{% for k in keyboard_data %}{{ k.total_deletions }}{% if not forloop.last %},{% endif %}{% endfor %}];
+if(kbDates.length){new Chart(document.getElementById('kbChart'),{type:'line',data:{labels:kbDates,datasets:[{label:'Keystrokes',data:kbKeys,borderColor:'rgba(99,102,241,1)',tension:0.3,fill:false},{label:'Deletions',data:kbDels,borderColor:'rgba(239,68,68,1)',tension:0.3,fill:false}]},options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{y:{beginAtZero:true,ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},x:{ticks:{color:'#94a3b8'},grid:{display:false}}}}});}
+</script>
+{% endblock %}

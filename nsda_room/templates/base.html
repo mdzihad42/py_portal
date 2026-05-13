@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NSDA Student Portal — Debate management, monitoring, and collaboration">
+    <title>{% block title %}NSDA Portal{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="app-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="logo">N</div>
+            <div><h2>NSDA Portal</h2><small>{{ request.user.get_role_display|default:"Portal" }}</small></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="{% url 'portal:dashboard' %}" class="nav-link"><span class="icon"><i class="fas fa-home"></i></span>Dashboard</a>
+                <a href="{% url 'debates:list' %}" class="nav-link"><span class="icon"><i class="fas fa-gavel"></i></span>Debates</a>
+                <a href="{% url 'portal:notice_list' %}" class="nav-link"><span class="icon"><i class="fas fa-bullhorn"></i></span>Notices</a>
+                <a href="{% url 'portal:assignment_list' %}" class="nav-link"><span class="icon"><i class="fas fa-tasks"></i></span>Assignments</a>
+            </div>
+            {% if request.user.is_student %}
+            <div class="nav-section">
+                <div class="nav-section-title">My Activity</div>
+                <a href="{% url 'debates:my_debates' %}" class="nav-link"><span class="icon"><i class="fas fa-list"></i></span>My Debates</a>
+                <a href="{% url 'debates:my_results' %}" class="nav-link"><span class="icon"><i class="fas fa-trophy"></i></span>My Results</a>
+            </div>
+            {% endif %}
+            {% if request.user.is_teacher or request.user.is_admin_user %}
+            <div class="nav-section">
+                <div class="nav-section-title">Management</div>
+                <a href="{% url 'debates:create' %}" class="nav-link"><span class="icon"><i class="fas fa-plus-circle"></i></span>Create Debate</a>
+                <a href="{% url 'portal:notice_create' %}" class="nav-link"><span class="icon"><i class="fas fa-edit"></i></span>Post Notice</a>
+                <a href="{% url 'portal:assignment_create' %}" class="nav-link"><span class="icon"><i class="fas fa-file-alt"></i></span>New Assignment</a>
+                <a href="{% url 'monitoring:dashboard' %}" class="nav-link"><span class="icon"><i class="fas fa-chart-line"></i></span>Monitoring</a>
+            </div>
+            {% endif %}
+            {% if request.user.is_admin_user %}
+            <div class="nav-section">
+                <div class="nav-section-title">Admin</div>
+                <a href="{% url 'accounts:user_list' %}" class="nav-link"><span class="icon"><i class="fas fa-users"></i></span>All Users</a>
+                <a href="/admin/" class="nav-link"><span class="icon"><i class="fas fa-cog"></i></span>Django Admin</a>
+            </div>
+            {% endif %}
+            <div class="nav-section">
+                <div class="nav-section-title">Communication</div>
+                <a href="{% url 'chat:room_list' %}" class="nav-link"><span class="icon"><i class="fas fa-comments"></i></span>Chat</a>
+                <a href="{% url 'portal:file_list' %}" class="nav-link"><span class="icon"><i class="fas fa-folder"></i></span>Files</a>
+                <a href="{% url 'notifications:list' %}" class="nav-link">
+                    <span class="icon"><i class="fas fa-bell"></i></span>Notifications
+                    {% if unread_notifications_count %}<span class="nav-badge">{{ unread_notifications_count }}</span>{% endif %}
+                </a>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-avatar">
+                    {% if request.user.profile_picture %}
+                        <img src="{{ request.user.profile_picture.url }}" alt="avatar">
+                    {% else %}
+                        {{ request.user.first_name|first|default:request.user.username|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="user-info">
+                    <div class="name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div class="role">{{ request.user.get_role_display }}</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+        <header class="topbar">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="btn-icon" id="sidebar-toggle" style="display:none;"><i class="fas fa-bars"></i></button>
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            <div class="topbar-actions">
+                <a href="{% url 'notifications:list' %}" class="btn-icon">
+                    <i class="fas fa-bell"></i>
+                    {% if unread_notifications_count %}<span class="badge-dot"></span>{% endif %}
+                </a>
+                <a href="{% url 'accounts:profile' %}" class="btn-icon"><i class="fas fa-user"></i></a>
+                <a href="{% url 'accounts:logout' %}" class="btn-icon"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </header>
+        <div class="content-area">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

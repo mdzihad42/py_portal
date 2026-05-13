@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard — NSDA Portal{% endblock %}
+{% block page_title %}Teacher Dashboard{% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-users"></i></div><div class="stat-value">{{ total_students }}</div><div class="stat-label">Total Students</div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-gavel"></i></div><div class="stat-value">{{ total_debates }}</div><div class="stat-label">My Debates</div></div>
+    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-clock"></i></div><div class="stat-value">{{ pending_submissions }}</div><div class="stat-label">Pending Grades</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-bullhorn"></i></div><div class="stat-value">{{ recent_notices|length }}</div><div class="stat-label">My Notices</div></div>
+</div>
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header"><h3><i class="fas fa-gavel" style="color:var(--accent-light);margin-right:8px;"></i>My Debates</h3><a href="{% url 'debates:create' %}" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> New</a></div>
+        <div class="card-body">
+            {% for debate in recent_debates %}
+            <div style="padding:12px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                <div><a href="{% url 'debates:detail' debate.pk %}" style="font-weight:600;">{{ debate.title }}</a><br><span class="text-sm text-muted">{{ debate.date|date:"M d, Y" }} · {{ debate.registered_count }} participants</span></div>
+                <span class="badge badge-{% if debate.status == 'upcoming' %}info{% elif debate.status == 'completed' %}success{% else %}warning{% endif %}">{{ debate.get_status_display }}</span>
+            </div>
+            {% empty %}<div class="empty-state"><div class="icon"><i class="fas fa-gavel"></i></div><h3>No debates created</h3></div>{% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3><i class="fas fa-inbox" style="color:var(--warning);margin-right:8px;"></i>Recent Submissions</h3></div>
+        <div class="card-body">
+            {% for sub in recent_submissions %}
+            <div style="padding:12px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                <div><strong>{{ sub.student.get_full_name|default:sub.student.username }}</strong><br><span class="text-sm text-muted">{{ sub.assignment.title }} · {{ sub.submitted_at|date:"M d" }}</span></div>
+                <span class="badge {% if sub.is_graded %}badge-success{% else %}badge-warning{% endif %}">{% if sub.is_graded %}Graded{% else %}Pending{% endif %}</span>
+            </div>
+            {% empty %}<p class="text-muted">No submissions yet.</p>{% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

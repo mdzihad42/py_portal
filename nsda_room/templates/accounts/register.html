@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — NSDA Portal</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width:540px;">
+        <div class="auth-logo">
+            <div class="logo">N</div>
+            <h1>Create Account</h1>
+            <p class="subtitle">Join the NSDA Portal as a {{ role|title }}</p>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:24px;justify-content:center;">
+            <a href="?role=student" class="btn {% if role == 'student' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Student</a>
+            <a href="?role=teacher" class="btn {% if role == 'teacher' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Teacher</a>
+        </div>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="{{ role }}">
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}{% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}{% endif %}
+                {% if field.help_text %}<div class="text-sm text-muted" style="margin-top:4px;">{{ field.help_text }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-user-plus"></i> Create Account</button>
+            </div>
+        </form>
+        <div class="auth-footer">
+            Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
