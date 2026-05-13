@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Results: {{ quiz.title }}{% endblock %}
+{% block page_title %}Exam Results: {{ quiz.title }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Student Submissions</h3>
+        <span class="badge badge-info">Total: {{ submissions.count }}</span>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Student Name</th>
+                        <th>Username</th>
+                        <th>Submission Date</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in submissions %}
+                    <tr>
+                        <td><strong>#{{ forloop.counter }}</strong></td>
+                        <td>{{ sub.student.get_full_name }}</td>
+                        <td>@{{ sub.student.username }}</td>
+                        <td>{{ sub.submitted_at|date:"M d, Y H:i" }}</td>
+                        <td style="font-weight:700;color:var(--success);">{{ sub.score }} / {{ quiz.total_marks }}</td>
+                        <td>
+                            {% widthratio sub.score quiz.total_marks 100 as percent %}
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="flex:1;height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;">
+                                    <div style="width:{{ percent }}%;height:100%;background:var(--accent);"></div>
+                                </div>
+                                <span class="text-xs">{{ percent }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <form method="POST" action="{% url 'exams:reset_submission' sub.id %}" onsubmit="return confirm('Are you sure you want to reset this student\'s attempt? They will be able to take the exam again.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-undo"></i> Reset</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center">No submissions yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top:20px;">
+    <a href="{% url 'exams:teacher_quiz_list' %}" class="btn btn-secondary">Back to Management</a>
+</div>
+{% endblock %}

@@ -4,9 +4,9 @@
 {% block content %}
 <div class="stats-grid">
     <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-gavel"></i></div><div class="stat-value">{{ total_debates }}</div><div class="stat-label">Enrolled Debates</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-trophy"></i></div><div class="stat-value">{{ avg_score|floatformat:1 }}</div><div class="stat-label">Average Score</div></div>
-    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-tasks"></i></div><div class="stat-value">{{ pending_assignments|length }}</div><div class="stat-label">Pending Assignments</div></div>
-    <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-bell"></i></div><div class="stat-value">{{ unread_notifications_count }}</div><div class="stat-label">Notifications</div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-desktop"></i></div><div class="stat-value">{{ total_active_hours }}h</div><div class="stat-label">Monitoring Active</div></div>
+    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-wallet"></i></div><div class="stat-value">৳{{ unpaid_fines }}</div><div class="stat-label">Unpaid Fines</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-tasks"></i></div><div class="stat-value">{{ pending_assignments|length }}</div><div class="stat-label">Assignments</div></div>
 </div>
 <div class="grid-2">
     <div class="card">

@@ -25,6 +25,9 @@
                 <a href="{% url 'debates:list' %}" class="nav-link"><span class="icon"><i class="fas fa-gavel"></i></span>Debates</a>
                 <a href="{% url 'portal:notice_list' %}" class="nav-link"><span class="icon"><i class="fas fa-bullhorn"></i></span>Notices</a>
                 <a href="{% url 'portal:assignment_list' %}" class="nav-link"><span class="icon"><i class="fas fa-tasks"></i></span>Assignments</a>
+                <a href="{% url 'exams:quiz_list' %}" class="nav-link"><span class="icon"><i class="fas fa-file-signature"></i></span>Exams</a>
+                <a href="{% url 'portal:leaderboard' %}" class="nav-link"><span class="icon"><i class="fas fa-trophy"></i></span>Leaderboard</a>
+                <a href="{% url 'finance:fine_list' %}" class="nav-link"><span class="icon"><i class="fas fa-wallet"></i></span>Fines</a>
             </div>
             {% if request.user.is_student %}
             <div class="nav-section">
@@ -45,6 +48,7 @@
                 <a href="{% url 'debates:create' %}" class="nav-link"><span class="icon"><i class="fas fa-plus-circle"></i></span>Create Debate</a>
                 <a href="{% url 'portal:notice_create' %}" class="nav-link"><span class="icon"><i class="fas fa-edit"></i></span>Post Notice</a>
                 <a href="{% url 'portal:assignment_create' %}" class="nav-link"><span class="icon"><i class="fas fa-file-alt"></i></span>New Assignment</a>
+                <a href="{% url 'exams:teacher_quiz_list' %}" class="nav-link"><span class="icon"><i class="fas fa-edit"></i></span>Manage Exams</a>
                 <a href="{% url 'monitoring:dashboard' %}" class="nav-link"><span class="icon"><i class="fas fa-chart-line"></i></span>Monitoring</a>
             </div>
             {% endif %}

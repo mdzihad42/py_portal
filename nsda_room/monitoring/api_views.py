@@ -10,6 +10,7 @@ from .serializers import (
     KeyboardActivitySerializer, SessionSerializer,
 )
 from .alert_engine import check_for_alerts
+from .utils import update_student_attendance
 
 
 class StartSessionAPI(APIView):
@@ -55,6 +56,7 @@ class ScreenshotUploadAPI(APIView):
         serializer = ScreenshotSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(student=request.user)
+            update_student_attendance(request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -72,7 +74,15 @@ class AppUsageAPI(APIView):
             serializer = AppUsageSerializer(data=data)
 
         if serializer.is_valid():
-            serializer.save(student=request.user)
+            instances = serializer.save(student=request.user)
+            # Calculate total duration in this batch
+            total_duration = 0
+            if isinstance(instances, list):
+                total_duration = sum(i.duration_seconds for i in instances if not i.is_idle)
+            elif not instances.is_idle:
+                total_duration = instances.duration_seconds
+            
+            update_student_attendance(request.user, active_seconds=total_duration)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

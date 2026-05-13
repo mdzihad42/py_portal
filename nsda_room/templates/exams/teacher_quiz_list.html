@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Manage Exams — NSDA Portal{% endblock %}
+{% block page_title %}Exam Management{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Your Quizzes</h3>
+        <a href="{% url 'exams:quiz_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Create New Exam</a>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Exam Title</th>
+                        <th>Questions</th>
+                        <th>Duration</th>
+                        <th>Submissions</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quiz in quizzes %}
+                    <tr>
+                        <td style="font-weight:600;">{{ quiz.title }}</td>
+                        <td>{{ quiz.questions.count }}</td>
+                        <td>{{ quiz.duration_minutes }} Min</td>
+                        <td>{{ quiz.submissions.count }}</td>
+                        <td>
+                            {% if quiz.is_active %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display:flex;gap:8px;">
+                                <a href="{% url 'exams:add_question' quiz.id %}" class="btn btn-sm btn-info"><i class="fas fa-plus-circle"></i> Add Questions</a>
+                                <a href="{% url 'exams:quiz_results' quiz.id %}" class="btn btn-sm btn-success"><i class="fas fa-chart-bar"></i> Results</a>
+                                <a href="{% url 'exams:quiz_detail' quiz.id %}" class="btn btn-sm btn-secondary">View</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center">You haven't created any exams yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mt-20">
+    <p><i class="fas fa-info-circle"></i> <strong>Pro Tip:</strong> পরীক্ষার টাইটেল তৈরি করার পর "Add Questions" বাটনে ক্লিক করলে আপনি সরাসরি গুগল ফর্মের মতো প্রশ্ন এবং অপশনগুলো যোগ করতে পারবেন।</p>
+</div>
+{% endblock %}

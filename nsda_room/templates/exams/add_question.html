@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Add Question — NSDA Portal{% endblock %}
+{% block page_title %}Add Question to {{ quiz.title }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <div class="card-header"><h3><i class="fas fa-question-circle"></i> New Question</h3></div>
+    <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group mb-20">
+                <label style="font-weight:600;">Question Text</label>
+                <textarea name="question_text" class="form-control" rows="3" placeholder="Enter your question here..." required></textarea>
+            </div>
+            
+            <div class="form-group mb-20">
+                <label style="font-weight:600;">Marks for this question</label>
+                <input type="number" name="marks" class="form-control" value="1" style="width:100px;">
+            </div>
+
+            <div class="options-container" style="background:var(--bg-secondary);padding:20px;border-radius:var(--radius-md);border:1px solid var(--border-color);">
+                <h4 class="mb-16">Options (MCQ)</h4>
+                <p class="text-xs text-muted mb-16">Select the radio button next to the correct answer.</p>
+                
+                {% for i in "0123" %}
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                    <input type="radio" name="correct_option" value="{{ forloop.counter0 }}" {% if forloop.first %}checked{% endif %} style="accent-color:var(--success);width:20px;height:20px;">
+                    <input type="text" name="option_text" class="form-control" placeholder="Option {{ forloop.counter }}" required>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top:24px;display:flex;gap:12px;">
+                <button type="submit" name="add_another" class="btn btn-secondary" style="flex:1;">Save & Add Another</button>
+                <button type="submit" class="btn btn-primary" style="flex:1;">Save & Finish</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

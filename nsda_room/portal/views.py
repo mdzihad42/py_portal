@@ -5,7 +5,7 @@ from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Count, Avg, Q
+from django.db.models import Count, Avg, Q, Sum
 
 from accounts.mixins import (
     StudentRequiredMixin, TeacherRequiredMixin,
@@ -17,6 +17,50 @@ from .forms import (
     NoticeForm, FileShareForm, AssignmentForm,
     SubmissionForm, GradeSubmissionForm,
 )
+
+
+# ─── Leaderboard View ────────────────────────────────────────
+
+class LeaderboardView(ListView):
+    template_name = 'portal/leaderboard.html'
+    context_object_name = 'leaderboard'
+    
+    def get_queryset(self):
+        from monitoring.models import AppUsage
+        from exams.models import QuizSubmission
+        from debates.models import DebateResult
+        
+        students = User.objects.filter(role='student')
+        leaderboard_data = []
+        
+        for student in students:
+            # 1. Exam Points
+            exam_points = QuizSubmission.objects.filter(
+                student=student, is_completed=True
+            ).aggregate(total=Sum('score'))['total'] or 0
+            
+            # 2. Attendance Points (10 pts per hour of active monitoring)
+            active_seconds = AppUsage.objects.filter(
+                student=student, is_idle=False
+            ).aggregate(total=Sum('duration_seconds'))['total'] or 0
+            attendance_points = (active_seconds // 3600) * 10
+            
+            # 3. Debate Points
+            debate_points = DebateResult.objects.filter(
+                student=student
+            ).aggregate(total=Sum('score'))['total'] or 0
+            
+            total_points = float(exam_points) + float(attendance_points) + float(debate_points)
+            
+            leaderboard_data.append({
+                'user': student,
+                'exam_points': exam_points,
+                'attendance_points': attendance_points,
+                'debate_points': float(debate_points),
+                'total_points': total_points
+            })
+        
+        return sorted(leaderboard_data, key=lambda x: x['total_points'], reverse=True)
 
 
 # ─── Dashboard Views ─────────────────────────────────────────
@@ -57,6 +101,17 @@ class StudentDashboardView(StudentRequiredMixin, View):
             Q(target_role='all') | Q(target_role='student')
         )[:5]
 
+        from monitoring.models import Attendance
+        from finance.models import Fine
+
+        total_active_seconds = Attendance.objects.filter(
+            student=request.user
+        ).aggregate(total=Sum('total_active_seconds'))['total'] or 0
+        
+        unpaid_fines = Fine.objects.filter(
+            student=request.user, is_paid=False
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
         context = {
             'my_debates': my_debates,
             'my_results': my_results,
@@ -66,6 +121,8 @@ class StudentDashboardView(StudentRequiredMixin, View):
             'avg_score': DebateResult.objects.filter(student=request.user).aggregate(
                 avg=Avg('score')
             )['avg'] or 0,
+            'total_active_hours': round(total_active_seconds / 3600, 1),
+            'unpaid_fines': unpaid_fines,
         }
         return render(request, 'portal/student_dashboard.html', context)
 

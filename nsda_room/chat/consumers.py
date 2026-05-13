@@ -36,36 +36,99 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        message_content = data.get('message', '').strip()
+        msg_type = data.get('type', 'chat_message')
 
-        if not message_content:
-            return
+        if msg_type == 'chat_message':
+            message_content = data.get('message', '').strip()
+            if not message_content:
+                return
 
-        # Save message to database
-        message = await self.save_message(message_content)
+            # Save message to database
+            message = await self.save_message(message_content)
 
-        # Broadcast to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message_content,
-                'sender': self.user.username,
-                'sender_id': self.user.id,
-                'timestamp': timezone.now().strftime('%H:%M'),
-                'sender_name': self.user.get_full_name() or self.user.username,
-            }
-        )
+            # Broadcast to room group
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message_broadcast',
+                    'message': message_content,
+                    'sender': self.user.username,
+                    'sender_id': self.user.id,
+                    'timestamp': timezone.now().strftime('%H:%M'),
+                    'sender_name': self.user.get_full_name() or self.user.username,
+                }
+            )
+        elif msg_type == 'voice_join':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'voice_join_broadcast',
+                    'peer_id': data['peer_id'],
+                    'sender_id': self.user.id,
+                    'sender_name': self.user.get_full_name() or self.user.username,
+                }
+            )
+        elif msg_type == 'voice_leave':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'voice_leave_broadcast',
+                    'sender_id': self.user.id,
+                }
+            )
+        elif msg_type == 'voice_call_request':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'voice_call_request_broadcast',
+                    'sender_id': self.user.id,
+                    'sender_name': self.user.get_full_name() or self.user.username,
+                }
+            )
+        elif msg_type == 'voice_call_hangup':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'voice_call_hangup_broadcast',
+                    'sender_id': self.user.id,
+                }
+            )
 
-    async def chat_message(self, event):
-        """Send message to WebSocket."""
+    async def chat_message_broadcast(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'message',
+            'type': 'chat_message',
             'message': event['message'],
             'sender': event['sender'],
             'sender_id': event['sender_id'],
             'sender_name': event['sender_name'],
             'timestamp': event['timestamp'],
+        }))
+
+    async def voice_join_broadcast(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'voice_join',
+            'peer_id': event['peer_id'],
+            'sender_id': event['sender_id'],
+            'sender_name': event['sender_name'],
+        }))
+
+    async def voice_leave_broadcast(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'voice_leave',
+            'sender_id': event['sender_id'],
+        }))
+
+    async def voice_call_request_broadcast(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'voice_call_request',
+            'sender_id': event['sender_id'],
+            'sender_name': event['sender_name'],
+        }))
+
+    async def voice_call_hangup_broadcast(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'voice_call_hangup',
+            'sender_id': event['sender_id'],
         }))
 
     @database_sync_to_async

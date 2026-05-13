@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Taking {{ quiz.title }}{% endblock %}
+{% block page_title %}{{ quiz.title }}{% endblock %}
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div class="card mb-20" style="position: sticky; top: 80px; z-index: 100; border-color: var(--accent);">
+        <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;">
+            <div style="font-weight:600;"><i class="fas fa-user-edit mr-8"></i> {{ request.user.get_full_name }}</div>
+            <div id="timer" style="font-size:20px;font-weight:700;color:var(--danger);">
+                <i class="fas fa-clock mr-8"></i> <span id="time-left">--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" id="quiz-form">
+        {% csrf_token %}
+        {% for q in questions %}
+        <div class="card mb-20">
+            <div class="card-header">
+                <h4 style="display:flex;gap:12px;">
+                    <span class="text-muted">Q{{ forloop.counter }}.</span>
+                    {{ q.text }}
+                </h4>
+                <span class="text-xs text-muted">{{ q.marks }} Marks</span>
+            </div>
+            <div class="card-body">
+                <div class="options-grid" style="display:grid;gap:12px;">
+                    {% for opt in q.options.all %}
+                    <label class="option-label" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border-color);transition:var(--transition);">
+                        <input type="radio" name="question_{{ q.id }}" value="{{ opt.id }}" style="accent-color:var(--accent);">
+                        {{ opt.text }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div style="text-align:center;margin-bottom:60px;">
+            <button type="submit" class="btn btn-primary" style="padding:14px 60px;font-size:16px;">Submit Exam</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .option-label:hover { border-color: var(--accent); background: var(--bg-glass); }
+    .option-label input:checked + span { font-weight: 600; }
+</style>
+
+<script>
+    const duration = {{ quiz.duration_minutes }} * 60;
+    let timeLeft = duration;
+    const timerDisplay = document.getElementById('time-left');
+    const form = document.getElementById('quiz-form');
+
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        
+        if (timeLeft <= 0) {
+            alert('Time is up! Submitting your exam automatically.');
+            form.submit();
+        }
+        timeLeft--;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // Prevent accidental exit
+    window.onbeforeunload = function() {
+        return "Are you sure you want to leave? Your progress will be lost.";
+    };
+    form.onsubmit = function() {
+        window.onbeforeunload = null;
+    };
+</script>
+{% endblock %}

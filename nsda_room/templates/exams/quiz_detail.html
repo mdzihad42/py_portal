@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.title }} — NSDA Portal{% endblock %}
+{% block page_title %}Exam Details{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header">
+        <h2>{{ quiz.title }}</h2>
+        <span class="badge badge-info">{{ quiz.duration_minutes }} Minutes</span>
+    </div>
+    <div class="card-body">
+        <div class="mb-20">
+            <h4 class="text-muted mb-8">Description</h4>
+            <p>{{ quiz.description }}</p>
+        </div>
+        
+        <div class="stats-grid mb-20" style="grid-template-columns: 1fr 1fr;">
+            <div class="stat-card">
+                <div class="stat-label">Total Marks</div>
+                <div class="stat-value">{{ quiz.total_marks }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Questions</div>
+                <div class="stat-value">{{ quiz.questions.count }}</div>
+            </div>
+        </div>
+
+        {% if submission %}
+        <div class="alert alert-success" style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <i class="fas fa-check-circle"></i>
+                You have completed this exam.
+            </div>
+            <div style="font-weight:700;font-size:20px;">
+                Score: {{ submission.score }}/{{ quiz.total_marks }}
+            </div>
+        </div>
+        {% elif request.user.is_teacher or request.user.is_admin_user %}
+        <div class="alert alert-info">
+            <i class="fas fa-chalkboard-teacher"></i>
+            You are viewing this exam as a teacher. You can manage questions or view student results.
+        </div>
+        <div style="text-align:center;margin-top:24px;display:flex;justify-content:center;gap:12px;">
+            <a href="{% url 'exams:add_question' quiz.pk %}" class="btn btn-primary">Add Questions</a>
+            <a href="{% url 'exams:quiz_results' quiz.pk %}" class="btn btn-success">View All Results</a>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Please ensure you have a stable connection before starting. Once started, you must submit before the timer ends.
+        </div>
+        <div style="text-align:center;margin-top:24px;">
+            <a href="{% url 'exams:take_quiz' quiz.pk %}" class="btn btn-primary" style="padding:12px 40px;">Start Exam Now</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

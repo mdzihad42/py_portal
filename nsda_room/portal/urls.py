@@ -9,6 +9,7 @@ urlpatterns = [
     path('dashboard/student/', views.StudentDashboardView.as_view(), name='student_dashboard'),
     path('dashboard/teacher/', views.TeacherDashboardView.as_view(), name='teacher_dashboard'),
     path('dashboard/admin/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('leaderboard/', views.LeaderboardView.as_view(), name='leaderboard'),
 
     # Notices
     path('notices/', views.NoticeListView.as_view(), name='notice_list'),

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Exams — NSDA Portal{% endblock %}
+{% block page_title %}Available Exams{% endblock %}
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+    {% for quiz in quizzes %}
+    <div class="card">
+        <div class="card-header">
+            <h3>{{ quiz.title }}</h3>
+            <span class="badge badge-info">{{ quiz.duration_minutes }} Min</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted text-sm mb-16">{{ quiz.description|truncatechars:100 }}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span class="text-sm">Total Marks: <strong>{{ quiz.total_marks }}</strong></span>
+                <a href="{% url 'exams:quiz_detail' quiz.pk %}" class="btn btn-primary btn-sm">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="icon"><i class="fas fa-file-alt"></i></div>
+        <h3>No active exams</h3>
+        <p>Check back later for new quizzes.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

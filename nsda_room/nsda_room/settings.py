@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     'chat',
     'monitoring',
     'notifications',
+    'exams',
+    'finance',
 ]
 
 MIDDLEWARE = [

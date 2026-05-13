@@ -174,7 +174,7 @@ class MyDebatesView(StudentRequiredMixin, ListView):
 
 
 class MyResultsView(StudentRequiredMixin, ListView):
-    """Student view: my results across all debates."""
+    """Student view: my results across debates and exams."""
     template_name = 'debates/my_results.html'
     context_object_name = 'results'
     paginate_by = 10
@@ -183,3 +183,12 @@ class MyResultsView(StudentRequiredMixin, ListView):
         return DebateResult.objects.filter(
             student=self.request.user
         ).select_related('debate').order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from exams.models import QuizSubmission
+        context['quiz_results'] = QuizSubmission.objects.filter(
+            student=self.request.user, 
+            is_completed=True
+        ).select_related('quiz').order_by('-submitted_at')
+        return context
