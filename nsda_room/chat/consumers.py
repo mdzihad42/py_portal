@@ -94,6 +94,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
             )
 
+        elif msg_type == 'webrtc_signal':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'webrtc_signal_broadcast',
+                    'signal': data['signal'],
+                    'sender_id': self.user.id,
+                    'target_id': data.get('target_id'),
+                }
+            )
+
+    async def webrtc_signal_broadcast(self, event):
+        # Don't send back to sender
+        if event['sender_id'] != self.user.id:
+            # If there's a target_id, only send to that user
+            if not event['target_id'] or event['target_id'] == self.user.id:
+                await self.send(text_data=json.dumps({
+                    'type': 'webrtc_signal',
+                    'signal': event['signal'],
+                    'sender_id': event['sender_id'],
+                }))
+
     async def chat_message_broadcast(self, event):
         await self.send(text_data=json.dumps({
             'type': 'chat_message',

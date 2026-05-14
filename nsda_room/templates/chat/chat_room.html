@@ -1,220 +1,252 @@
 {% extends "base.html" %}
-{% block title %}{{ room.name }} — Chat{% endblock %}
-{% block page_title %}{{ room.name }}{% endblock %}
+{% block title %}{{ room.name }} — NSDA Chat{% endblock %}
+
 {% block content %}
-<div class="card" style="height:calc(100vh - 160px);display:flex;flex-direction:column;">
-    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg-glass);backdrop-filter:blur(10px);border-bottom:1px solid var(--border-color);">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <i class="fas fa-comments" style="color:var(--accent-light);font-size:24px;"></i>
-            <div>
-                <h3 style="margin:0;">{{ room.name }}</h3>
-                <span id="call-status" class="text-xs text-muted">Voice call inactive</span>
+<div class="messenger-container">
+    <!-- Messenger Header -->
+    <div class="messenger-header">
+        <div class="header-left">
+            <div class="avatar-circle main">{{ room.name|slice:":1"|upper }}</div>
+            <div class="header-info">
+                <h4>{{ room.name }}</h4>
+                <span class="status-indicator">Active now</span>
             </div>
         </div>
-        <div style="display:flex;gap:8px;">
-            <button id="join-call" class="btn btn-sm btn-success"><i class="fas fa-phone-alt"></i> Join Call</button>
-            <button id="leave-call" class="btn btn-sm btn-danger" style="display:none;"><i class="fas fa-phone-slash"></i> Leave</button>
-            <a href="{% url 'chat:room_list' %}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+        <div class="header-actions">
+            <button id="call-audio" class="action-btn"><i class="fas fa-phone"></i></button>
+            <button id="call-video" class="action-btn"><i class="fas fa-video"></i></button>
+            <a href="{% url 'chat:room_list' %}" class="action-btn"><i class="fas fa-times"></i></a>
         </div>
     </div>
-    
-    <!-- Voice Call Area (Initially Hidden) -->
-    <div id="voice-call-area" style="display:none;background:rgba(16,185,129,0.1);padding:10px 20px;border-bottom:1px solid var(--success);display:flex;gap:12px;overflow-x:auto;">
-        <div id="remote-audios"></div>
+
+    <!-- Video Call Overlay -->
+    <div id="video-overlay" class="video-overlay">
+        <video id="remote-video" autoplay playsinline class="remote-video"></video>
+        <video id="local-video" autoplay muted playsinline class="local-video"></video>
+        <div class="video-controls">
+            <button id="hangup" class="control-btn hangup"><i class="fas fa-phone-slash"></i></button>
+        </div>
     </div>
 
-    <div id="chat-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;">
+    <!-- Incoming Call Modal -->
+    <div id="incoming-modal" class="incoming-modal">
+        <div class="modal-card">
+            <div class="pulse-avatar"><i class="fas fa-user"></i></div>
+            <h3 id="caller-name">Incoming Call</h3>
+            <div class="modal-actions">
+                <button id="btn-accept" class="modal-btn accept"><i class="fas fa-phone"></i></button>
+                <button id="btn-decline" class="modal-btn decline"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="chat-messages" class="chat-area">
         {% for msg in chat_messages %}
-        <div class="chat-message {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
-            {% if msg.sender != request.user %}<div class="sender">{{ msg.sender.get_full_name|default:msg.sender.username }}</div>{% endif %}
-            <div>{{ msg.content }}</div>
-            <div class="time">{{ msg.timestamp|time:"H:i" }}</div>
+        <div class="message-wrapper {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
+            {% if msg.sender != request.user %}
+            <div class="user-avatar-small">{{ msg.sender.username|slice:":1"|upper }}</div>
+            {% endif %}
+            <div class="message-bubble">
+                <div class="message-text">{{ msg.content }}</div>
+                <div class="message-time">{{ msg.timestamp|time:"H:i" }}</div>
+            </div>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Incoming Call Modal -->
-    <div id="incoming-call-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;justify-content:center;align-items:center;backdrop-filter:blur(5px);">
-        <div class="card" style="width:320px;text-align:center;padding:30px;border-radius:20px;background:var(--bg-card);border:2px solid var(--accent);">
-            <div class="user-avatar" style="width:80px;height:80px;margin:0 auto 20px;font-size:30px;" id="caller-avatar">?</div>
-            <h3 id="caller-name" style="margin-bottom:10px;">Incoming Call...</h3>
-            <p class="text-muted mb-20">Voice call from chat room</p>
-            <div style="display:flex;justify-content:center;gap:20px;">
-                <button id="accept-call" class="btn btn-success" style="width:60px;height:60px;border-radius:50%;"><i class="fas fa-phone"></i></button>
-                <button id="decline-call" class="btn btn-danger" style="width:60px;height:60px;border-radius:50%;"><i class="fas fa-phone-slash"></i></button>
-            </div>
+    <!-- Input -->
+    <div class="messenger-input-area">
+        <div class="input-actions-left">
+            <button class="icon-btn"><i class="fas fa-plus-circle"></i></button>
+            <button class="icon-btn"><i class="fas fa-camera"></i></button>
         </div>
-    </div>
-    
-    <audio id="ringtone" src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3" loop></audio>
-
-    <div class="chat-input-area">
-        <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." autocomplete="off">
-        <button id="chat-send" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+        <div class="input-wrapper">
+            <input type="text" id="chat-input" placeholder="Aa" autocomplete="off">
+            <button class="emoji-btn"><i class="far fa-smile"></i></button>
+        </div>
+        <button id="chat-send" class="send-btn"><i class="fas fa-thumbs-up"></i></button>
     </div>
 </div>
+
+<audio id="call-ringtone" src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3" loop></audio>
+
+<style>
+    :root { --messenger-blue: #0084ff; --messenger-bg: #fff; --bubble-sent: #0084ff; --bubble-received: #f1f0f0; --header-border: rgba(0,0,0,0.1); }
+    .messenger-container { height: calc(100vh - 100px); background: var(--messenger-bg); display: flex; flex-direction: column; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; position: relative; }
+    .messenger-header { padding: 10px 15px; border-bottom: 1px solid var(--header-border); display: flex; justify-content: space-between; align-items: center; background: #fff; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .avatar-circle.main { width: 40px; height: 40px; background: var(--messenger-blue); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .header-info h4 { margin: 0; font-size: 16px; }
+    .header-actions { display: flex; gap: 10px; }
+    .action-btn { background: none; border: none; color: var(--messenger-blue); font-size: 18px; cursor: pointer; padding: 8px; }
+    .chat-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 5px; }
+    .message-wrapper { display: flex; align-items: flex-end; gap: 8px; max-width: 80%; margin-bottom: 2px; }
+    .message-wrapper.sent { align-self: flex-end; flex-direction: row-reverse; }
+    .message-bubble { padding: 8px 15px; border-radius: 20px; font-size: 15px; }
+    .message-wrapper.sent .message-bubble { background: var(--bubble-sent); color: #fff; }
+    .message-wrapper.received .message-bubble { background: var(--bubble-received); color: #000; }
+    .messenger-input-area { padding: 10px 15px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--header-border); }
+    .input-wrapper { flex: 1; background: #f0f2f5; border-radius: 20px; display: flex; align-items: center; padding: 5px 15px; }
+    .input-wrapper input { flex: 1; background: none; border: none; outline: none; padding: 5px 0; }
+    .video-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
+    .remote-video { width: 100%; height: 100%; object-fit: cover; }
+    .local-video { position: absolute; bottom: 80px; right: 20px; width: 100px; border-radius: 12px; border: 2px solid #fff; }
+    .incoming-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; color: #fff; }
+    .modal-btn { width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 20px; color: #fff; cursor: pointer; margin: 0 15px; }
+    .modal-btn.accept { background: #22c55e; }
+    .modal-btn.decline { background: #ef4444; }
+    .control-btn.hangup { width: 60px; height: 60px; border-radius: 50%; background: #ef4444; color: #fff; border: none; cursor: pointer; }
+    .pulse-avatar { width: 80px; height: 80px; background: var(--messenger-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 30px; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 132, 255, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(0, 132, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 132, 255, 0); } }
+</style>
 {% endblock %}
+
 {% block extra_js %}
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script>
     const roomId = {{ room.pk }};
-    const currentUser = '{{ request.user.username }}';
     const currentUserId = {{ request.user.pk }};
     const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
     const chatSocket = new WebSocket(wsProtocol + window.location.host + '/ws/chat/' + roomId + '/');
-    const messagesDiv = document.getElementById('chat-messages');
+    
+    let localStream;
+    let peerConnection;
+    let remoteUserId;
+    let isVideoCall = true;
+    const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
+
+    const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send');
+    const videoOverlay = document.getElementById('video-overlay');
+    const incomingModal = document.getElementById('incoming-modal');
+    const ringtone = document.getElementById('call-ringtone');
 
-    // Voice Call UI Elements
-    const joinCallBtn = document.getElementById('join-call');
-    const leaveCallBtn = document.getElementById('leave-call');
-    const voiceArea = document.getElementById('voice-call-area');
-    const callStatus = document.getElementById('call-status');
-    const callModal = document.getElementById('incoming-call-modal');
-    const acceptBtn = document.getElementById('accept-call');
-    const declineBtn = document.getElementById('decline-call');
-    const ringtone = document.getElementById('ringtone');
-    const callerNameSpan = document.getElementById('caller-name');
-    const callerAvatar = document.getElementById('caller-avatar');
+    chatInput.addEventListener('input', () => {
+        chatSend.innerHTML = chatInput.value.trim() === '' ? '<i class="fas fa-thumbs-up"></i>' : '<i class="fas fa-paper-plane"></i>';
+    });
 
-    chatSocket.onmessage = function(e) {
+    chatSocket.onmessage = async (e) => {
         const data = JSON.parse(e.data);
-        
         if (data.type === 'chat_message') {
-            const div = document.createElement('div');
-            div.className = 'chat-message ' + (data.sender_id === currentUserId ? 'sent' : 'received');
-            let html = '';
-            if (data.sender_id !== currentUserId) html += '<div class="sender">' + data.sender_name + '</div>';
-            html += '<div>' + data.message + '</div><div class="time">' + data.timestamp + '</div>';
-            div.innerHTML = html;
-            messagesDiv.appendChild(div);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            appendMessage(data);
         } else if (data.type === 'voice_call_request') {
-            if (data.sender_id !== currentUserId && !peer) {
-                // Incoming call
-                showCallModal(data.sender_name);
+            if (data.sender_id !== currentUserId) {
+                remoteUserId = data.sender_id;
+                isVideoCall = data.is_video;
+                document.getElementById('caller-name').innerText = data.sender_name + (isVideoCall ? ' (Video Call)' : ' (Audio Call)');
+                incomingModal.style.display = 'flex';
+                ringtone.play().catch(() => {});
             }
-        } else if (data.type === 'voice_join') {
-            if (peer && data.sender_id !== currentUserId) {
-                callUser(data.peer_id);
-            }
-        } else if (data.type === 'voice_call_hangup' || data.type === 'voice_leave') {
-            if (peers[data.sender_id]) {
-                peers[data.sender_id].close();
-                delete peers[data.sender_id];
-            }
-            if (data.type === 'voice_call_hangup') {
-                stopCallForMe();
-            }
+        } else if (data.type === 'webrtc_signal') {
+            handleSignalingData(data.signal, data.sender_id);
+        } else if (data.type === 'voice_call_hangup') {
+            endCallLocally();
         }
     };
 
-    function showCallModal(name) {
-        callerNameSpan.textContent = name + ' is calling...';
-        callerAvatar.textContent = name.charAt(0).toUpperCase();
-        callModal.style.display = 'flex';
-        ringtone.play().catch(e => console.log("Audio play blocked"));
+    async function handleSignalingData(signal, senderId) {
+        if (signal.offer) {
+            remoteUserId = senderId;
+            // Offer received, will be handled when Accept is clicked
+            window.pendingOffer = signal.offer;
+        } else if (signal.answer) {
+            if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.answer));
+        } else if (signal.candidate) {
+            if (peerConnection) try { await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate)); } catch (e) {}
+        }
     }
 
-    function hideCallModal() {
-        callModal.style.display = 'none';
-        ringtone.pause();
-        ringtone.currentTime = 0;
-    }
-
-    acceptBtn.onclick = () => {
-        hideCallModal();
-        startVoiceCall();
-    };
-
-    declineBtn.onclick = () => {
-        hideCallModal();
-        chatSocket.send(JSON.stringify({ 'type': 'voice_call_hangup' }));
-    };
-
-    joinCallBtn.onclick = () => {
-        chatSocket.send(JSON.stringify({ 'type': 'voice_call_request' }));
-        startVoiceCall();
-    };
-
-    async function startVoiceCall() {
+    async function initiateCall(video = true) {
+        isVideoCall = video;
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            peer = new Peer();
-            
-            peer.on('open', (id) => {
-                chatSocket.send(JSON.stringify({
-                    'type': 'voice_join',
-                    'peer_id': id
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideoCall });
+            document.getElementById('local-video').srcObject = localStream;
+            document.getElementById('local-video').style.display = isVideoCall ? 'block' : 'none';
+            videoOverlay.style.display = 'block';
+
+            createPeerConnection(null); // No target yet, broadcasting
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            chatSocket.send(JSON.stringify({ 
+                'type': 'voice_call_request', 'sender_id': currentUserId, 
+                'sender_name': '{{ request.user.username }}', 'is_video': isVideoCall 
+            }));
+            chatSocket.send(JSON.stringify({ 'type': 'webrtc_signal', 'signal': { 'offer': offer } }));
+        } catch (err) { alert("Mic/Cam error: " + err); }
+    }
+
+    function createPeerConnection(targetId) {
+        if (peerConnection) peerConnection.close();
+        peerConnection = new RTCPeerConnection(servers);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        peerConnection.ontrack = (event) => { document.getElementById('remote-video').srcObject = event.streams[0]; };
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                chatSocket.send(JSON.stringify({ 
+                    'type': 'webrtc_signal', 'signal': { 'candidate': event.candidate }, 'target_id': targetId || remoteUserId 
                 }));
-                joinCallBtn.style.display = 'none';
-                leaveCallBtn.style.display = 'inline-block';
-                voiceArea.style.display = 'flex';
-                callStatus.textContent = 'In voice call';
-            });
-
-            peer.on('call', (call) => {
-                call.answer(localStream);
-                const audio = document.createElement('audio');
-                call.on('stream', (remoteStream) => {
-                    addAudioStream(audio, remoteStream);
-                });
-            });
-
-        } catch (err) {
-            alert('Could not access microphone: ' + err);
-        }
+            }
+        };
     }
 
-    function stopCallForMe() {
-        if (peer) {
-            peer.destroy();
-            peer = null;
-        }
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-        }
-        joinCallBtn.style.display = 'inline-block';
-        leaveCallBtn.style.display = 'none';
-        voiceArea.style.display = 'none';
-        callStatus.textContent = 'Voice call inactive';
-        hideCallModal();
-    }
+    document.getElementById('btn-accept').onclick = async () => {
+        incomingModal.style.display = 'none';
+        ringtone.pause();
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideoCall });
+            document.getElementById('local-video').srcObject = localStream;
+            document.getElementById('local-video').style.display = isVideoCall ? 'block' : 'none';
+            videoOverlay.style.display = 'block';
 
-    leaveCallBtn.onclick = () => {
-        chatSocket.send(JSON.stringify({ 'type': 'voice_call_hangup' }));
-        stopCallForMe();
+            createPeerConnection(remoteUserId);
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingOffer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            chatSocket.send(JSON.stringify({ 'type': 'webrtc_signal', 'signal': { 'answer': answer }, 'target_id': remoteUserId }));
+        } catch (err) { alert("Accept error: " + err); }
     };
 
-    function callUser(remotePeerId) {
-        const call = peer.call(remotePeerId, localStream);
-        const audio = document.createElement('audio');
-        call.on('stream', (remoteStream) => {
-            addAudioStream(audio, remoteStream);
-        });
-        peers[remotePeerId] = call;
+    document.getElementById('btn-decline').onclick = () => {
+        incomingModal.style.display = 'none';
+        ringtone.pause();
+        chatSocket.send(JSON.stringify({ 'type': 'voice_call_hangup', 'sender_id': currentUserId }));
+    };
+
+    document.getElementById('hangup').onclick = () => {
+        chatSocket.send(JSON.stringify({ 'type': 'voice_call_hangup', 'sender_id': currentUserId }));
+        endCallLocally();
+    };
+
+    function endCallLocally() {
+        if (peerConnection) { peerConnection.close(); peerConnection = null; }
+        if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
+        videoOverlay.style.display = 'none';
+        incomingModal.style.display = 'none';
+        ringtone.pause();
+        window.pendingOffer = null;
     }
 
-    function addAudioStream(audio, stream) {
-        audio.srcObject = stream;
-        audio.play();
-        document.getElementById('remote-audios').appendChild(audio);
+    document.getElementById('call-video').onclick = () => initiateCall(true);
+    document.getElementById('call-audio').onclick = () => initiateCall(false);
+
+    function appendMessage(data) {
+        const div = document.createElement('div');
+        div.className = 'message-wrapper ' + (data.sender_id === currentUserId ? 'sent' : 'received');
+        div.innerHTML = (data.sender_id !== currentUserId ? `<div class="user-avatar-small">${data.sender_name.charAt(0).toUpperCase()}</div>` : '') +
+            `<div class="message-bubble"><div class="message-text">${data.message}</div><div class="message-time">${data.timestamp}</div></div>`;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function sendMessage() {
-        const msg = chatInput.value.trim();
-        if (msg) { 
-            chatSocket.send(JSON.stringify({
-                'type': 'chat_message',
-                'message': msg
-            })); 
-            chatInput.value = ''; 
-        }
-    }
+    chatSend.onclick = () => {
+        const msg = chatInput.value.trim() || '👍';
+        chatSocket.send(JSON.stringify({ 'type': 'chat_message', 'message': msg }));
+        chatInput.value = '';
+    };
 
-    document.getElementById('chat-send').onclick = sendMessage;
-    chatInput.onkeypress = function(e) { if (e.key === 'Enter') sendMessage(); };
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    chatInput.onkeypress = (e) => { if (e.key === 'Enter') chatSend.click(); };
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 </script>
 {% endblock %}
