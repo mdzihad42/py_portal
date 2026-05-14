@@ -27,19 +27,22 @@
                 <a href="{% url 'portal:assignment_list' %}" class="nav-link"><span class="icon"><i class="fas fa-tasks"></i></span>Assignments</a>
                 <a href="{% url 'exams:quiz_list' %}" class="nav-link"><span class="icon"><i class="fas fa-file-signature"></i></span>Exams</a>
                 <a href="{% url 'portal:leaderboard' %}" class="nav-link"><span class="icon"><i class="fas fa-trophy"></i></span>Leaderboard</a>
-                <a href="{% url 'finance:fine_list' %}" class="nav-link"><span class="icon"><i class="fas fa-wallet"></i></span>Fines</a>
+                <a href="{% url 'attendance:prizes' %}" class="nav-link"><span class="icon"><i class="fas fa-award"></i></span>Monthly Prizes</a>
             </div>
             {% if request.user.is_student or request.user.is_cr %}
             <div class="nav-section">
                 <div class="nav-section-title">My Activity</div>
                 <a href="{% url 'debates:my_debates' %}" class="nav-link"><span class="icon"><i class="fas fa-list"></i></span>My Debates</a>
                 <a href="{% url 'debates:my_results' %}" class="nav-link"><span class="icon"><i class="fas fa-trophy"></i></span>My Results</a>
+                <a href="{% url 'attendance:prizes' %}" class="nav-link"><span class="icon"><i class="fas fa-star"></i></span>My Progress</a>
             </div>
             {% endif %}
             {% if request.user.is_teacher or request.user.is_admin_user or request.user.is_cr %}
             <div class="nav-section">
                 <div class="nav-section-title">Management</div>
                 {% if request.user.is_teacher or request.user.is_admin_user %}
+                <a href="{% url 'attendance:mark' %}" class="nav-link"><span class="icon"><i class="fas fa-calendar-check"></i></span>Mark Attendance</a>
+                <a href="{% url 'attendance:report' %}" class="nav-link"><span class="icon"><i class="fas fa-table"></i></span>Attendance Report</a>
                 <a href="{% url 'accounts:student_create' %}" class="nav-link"><span class="icon"><i class="fas fa-user-graduate"></i></span>Create Student</a>
                 <a href="{% url 'accounts:user_list' %}?role=student" class="nav-link"><span class="icon"><i class="fas fa-users"></i></span>Student List</a>
                 {% endif %}
@@ -112,7 +115,7 @@
                         </div>
                         <div class="dropdown-body" style="max-height: 400px; overflow-y: auto;">
                             {% for n in recent_notifications %}
-                            <a href="{{ n.link|default:'#' }}" class="dropdown-item {% if not n.is_read %}unread{% endif %}">
+                            <a href="{% url 'notifications:mark_read' n.pk %}" class="dropdown-item {% if not n.is_read %}unread{% endif %}">
                                 <div class="icon">
                                     <i class="fas fa-{% if n.notification_type == 'chat' %}comments{% elif n.notification_type == 'notice' %}bullhorn{% elif n.notification_type == 'assignment' %}tasks{% else %}info-circle{% endif %}"></i>
                                 </div>

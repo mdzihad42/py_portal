@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Attendance Report — NSDA Portal{% endblock %}
+{% block page_title %}Attendance Tracking Grid{% endblock %}
+
+{% block content %}
+<div class="card animate-fade-in">
+    <div class="card-header flex-between">
+        <h3><i class="fas fa-table" style="color:var(--accent);"></i> Recent Attendance History</h3>
+        <a href="{% url 'attendance:mark' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-edit"></i> Mark Today's Attendance
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th class="sticky-col">Student</th>
+                        {% for date in dates %}
+                        <th class="text-center">{{ date|date:"M d" }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_data %}
+                    <tr>
+                        <td class="sticky-col">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="user-avatar" style="width:24px; height:24px; font-size:10px;">
+                                    {% if row.student.profile_picture %}
+                                        <img src="{{ row.student.profile_picture.url }}" alt="">
+                                    {% else %}
+                                        {{ row.student.username|first|upper }}
+                                    {% endif %}
+                                </div>
+                                <span style="font-weight:600; font-size:13px;">{{ row.student.username }}</span>
+                            </div>
+                        </td>
+                        {% for att in row.data %}
+                        <td class="text-center">
+                            {% if att.status == 'PRESENT' %}
+                                <span class="dot present" title="{{ att.date }}: Present"></span>
+                            {% elif att.status == 'ABSENT' %}
+                                <span class="dot absent" title="{{ att.date }}: Absent"></span>
+                            {% elif att.status == 'LATE' %}
+                                <span class="dot late" title="{{ att.date }}: Late"></span>
+                            {% else %}
+                                <span class="dot empty" title="{{ att.date }}: No Record"></span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="legend mt-24">
+            <div class="flex-center gap-12" style="justify-content: flex-start;">
+                <div class="flex-center gap-4"><span class="dot present"></span> Present</div>
+                <div class="flex-center gap-4"><span class="dot absent"></span> Absent</div>
+                <div class="flex-center gap-4"><span class="dot late"></span> Late</div>
+                <div class="flex-center gap-4"><span class="dot empty"></span> N/A</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .report-table th, .report-table td {
+        min-width: 60px;
+        padding: 10px;
+    }
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 5;
+        min-width: 150px !important;
+        border-right: 2px solid var(--border-color);
+    }
+    .dot {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    .dot.present { background: var(--success); }
+    .dot.absent { background: var(--danger); }
+    .dot.late { background: var(--warning); }
+    .dot.empty { background: #e2e8f0; }
+</style>
+{% endblock %}

@@ -20,3 +20,9 @@ def format_duration(seconds):
         parts.append(f"{secs}s")
     
     return " ".join(parts)
+
+@register.filter
+def get_item(dictionary, key):
+    if dictionary:
+        return dictionary.get(key)
+    return None

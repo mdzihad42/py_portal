@@ -7,4 +7,4 @@ class PortalConfig(AppConfig):
     verbose_name = 'NSDA Portal'
 
     def ready(self):
-        import portal.signals
+        pass

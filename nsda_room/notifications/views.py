@@ -17,9 +17,9 @@ class NotificationListView(LoginRequiredMixin, ListView):
 
 
 class MarkReadView(LoginRequiredMixin, View):
-    """Mark a single notification as read."""
+    """Mark a single notification as read and redirect."""
 
-    def post(self, request, pk):
+    def get(self, request, pk):
         notification = Notification.objects.filter(
             pk=pk, user=request.user
         ).first()
@@ -29,6 +29,9 @@ class MarkReadView(LoginRequiredMixin, View):
             if notification.link:
                 return redirect(notification.link)
         return redirect('notifications:list')
+
+    def post(self, request, pk):
+        return self.get(request, pk)
 
 
 class MarkAllReadView(LoginRequiredMixin, View):

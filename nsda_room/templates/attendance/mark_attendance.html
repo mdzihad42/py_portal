@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load portal_extras %}
+{% block title %}Mark Attendance — NSDA Portal{% endblock %}
+{% block page_title %}Daily Attendance{% endblock %}
+
+{% block content %}
+<div class="card animate-fade-in">
+    <div class="card-header flex-between">
+        <h3><i class="fas fa-calendar-check" style="color:var(--accent);"></i> Mark Attendance for {{ date }}</h3>
+        <form method="GET" class="flex-center gap-12">
+            <input type="date" name="date" value="{{ date|date:'Y-m-d' }}" class="form-control" style="width: auto;">
+            <button type="submit" class="btn btn-secondary">Go</button>
+        </form>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        {% with att=attendance_dict|get_item:student.id %}
+                        <tr>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div class="user-avatar" style="width:32px; height:32px; font-size:12px;">
+                                        {% if student.profile_picture %}
+                                            <img src="{{ student.profile_picture.url }}" alt="">
+                                        {% else %}
+                                            {{ student.username|first|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>{{ student.get_full_name|default:student.username }}</strong>
+                                        <div class="text-xs text-muted">@{{ student.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="attendance-options">
+                                    <label class="att-opt">
+                                        <input type="radio" name="status_{{ student.id }}" value="PRESENT" {% if att.status == 'PRESENT' or not att %}checked{% endif %}>
+                                        <span class="opt-label present">P</span>
+                                    </label>
+                                    <label class="att-opt">
+                                        <input type="radio" name="status_{{ student.id }}" value="ABSENT" {% if att.status == 'ABSENT' %}checked{% endif %}>
+                                        <span class="opt-label absent">A</span>
+                                    </label>
+                                    <label class="att-opt">
+                                        <input type="radio" name="status_{{ student.id }}" value="LATE" {% if att.status == 'LATE' %}checked{% endif %}>
+                                        <span class="opt-label late">L</span>
+                                    </label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" name="remarks_{{ student.id }}" value="{{ att.remarks|default:'' }}" class="form-control" placeholder="Optional notes...">
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-actions mt-16" style="text-align: right;">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Save Attendance
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .attendance-options {
+        display: flex;
+        gap: 8px;
+    }
+    .att-opt {
+        cursor: pointer;
+    }
+    .att-opt input {
+        display: none;
+    }
+    .opt-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        font-weight: 700;
+        border: 2px solid #e2e8f0;
+        color: #64748b;
+        transition: var(--transition);
+    }
+    .att-opt input:checked + .present { background: var(--success); color: white; border-color: var(--success); }
+    .att-opt input:checked + .absent { background: var(--danger); color: white; border-color: var(--danger); }
+    .att-opt input:checked + .late { background: var(--warning); color: white; border-color: var(--warning); }
+    
+    .opt-label:hover { border-color: var(--accent); }
+</style>
+{% endblock %}
