@@ -5,16 +5,23 @@
 <div class="card">
     <div class="card-header">
         <h3>All Users ({{ users|length }})</h3>
-        <div style="display:flex;gap:8px;">
-            <a href="?role=" class="btn btn-sm {% if not role_filter %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
-            <a href="?role=student" class="btn btn-sm {% if role_filter == 'student' %}btn-primary{% else %}btn-secondary{% endif %}">Students</a>
-            <a href="?role=teacher" class="btn btn-sm {% if role_filter == 'teacher' %}btn-primary{% else %}btn-secondary{% endif %}">Teachers</a>
-            <a href="?role=admin" class="btn btn-sm {% if role_filter == 'admin' %}btn-primary{% else %}btn-secondary{% endif %}">Admins</a>
+        <div style="display:flex; gap:15px; align-items:center; width:100%;">
+            <div style="display:flex;gap:8px;">
+                <a href="?role=" class="btn btn-sm {% if not role_filter %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+                <a href="?role=student" class="btn btn-sm {% if role_filter == 'student' %}btn-primary{% else %}btn-secondary{% endif %}">Students</a>
+                <a href="?role=cr" class="btn btn-sm {% if role_filter == 'cr' %}btn-primary{% else %}btn-secondary{% endif %}">CRs</a>
+                <a href="?role=teacher" class="btn btn-sm {% if role_filter == 'teacher' %}btn-primary{% else %}btn-secondary{% endif %}">Teachers</a>
+            </div>
+            <form method="GET" style="flex-grow:1; display:flex; gap:5px;">
+                <input type="hidden" name="role" value="{{ role_filter }}">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search username, name, or email..." class="form-control" style="padding:5px 10px; height:auto;">
+                <button type="submit" class="btn btn-sm btn-primary">Search</button>
+            </form>
         </div>
     </div>
     <div class="card-body table-container">
         <table>
-            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>School</th><th>Joined</th></tr></thead>
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>School</th><th>Joined</th><th>Action</th></tr></thead>
             <tbody>
             {% for u in users %}
             <tr>
@@ -23,6 +30,19 @@
                 <td><span class="badge badge-{% if u.role == 'admin' %}danger{% elif u.role == 'teacher' %}warning{% else %}primary{% endif %}">{{ u.get_role_display }}</span></td>
                 <td>{{ u.school|default:"—" }}</td>
                 <td class="text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+                <td>
+                    <form method="POST" action="{% url 'accounts:update_user_role' u.pk %}" style="display:flex; gap:5px;">
+                        {% csrf_token %}
+                        <select name="role" class="form-control" style="padding:2px 5px; height:auto; width:120px; font-size:12px;">
+                            <option value="student" {% if u.role == 'student' %}selected{% endif %}>Student</option>
+                            <option value="cr" {% if u.role == 'cr' %}selected{% endif %}>CR</option>
+                            {% if request.user.is_admin_user %}
+                            <option value="teacher" {% if u.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                            {% endif %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-primary" style="padding:2px 8px;">Update</button>
+                    </form>
+                </td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="text-center text-muted" style="padding:40px;">No users found.</td></tr>

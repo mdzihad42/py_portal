@@ -137,3 +137,25 @@ class UserListView(TeacherOrAdminRequiredMixin, ListView):
         ctx['role_filter'] = self.request.GET.get('role', '')
         ctx['search_query'] = self.request.GET.get('q', '')
         return ctx
+
+
+class UpdateUserRoleView(TeacherOrAdminRequiredMixin, View):
+    """View to change a user's role (e.g. promote Student to CR)."""
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+        user_to_update = get_object_or_404(User, pk=pk)
+        new_role = request.POST.get('role')
+
+        if new_role in [User.Role.STUDENT, User.Role.CR, User.Role.TEACHER]:
+            # Admins can promote to Teacher, Teachers can only promote to Student/CR
+            if not request.user.is_admin_user and new_role == User.Role.TEACHER:
+                messages.error(request, "Only Admins can assign the Teacher role.")
+            else:
+                user_to_update.role = new_role
+                user_to_update.save()
+                messages.success(request, f"Role for {user_to_update.username} updated to {user_to_update.get_role_display()}.")
+        else:
+            messages.error(request, "Invalid role selected.")
+
+        return redirect('accounts:user_list')

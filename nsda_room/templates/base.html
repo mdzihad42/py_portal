@@ -29,27 +29,35 @@
                 <a href="{% url 'portal:leaderboard' %}" class="nav-link"><span class="icon"><i class="fas fa-trophy"></i></span>Leaderboard</a>
                 <a href="{% url 'finance:fine_list' %}" class="nav-link"><span class="icon"><i class="fas fa-wallet"></i></span>Fines</a>
             </div>
-            {% if request.user.is_student %}
+            {% if request.user.is_student or request.user.is_cr %}
             <div class="nav-section">
                 <div class="nav-section-title">My Activity</div>
                 <a href="{% url 'debates:my_debates' %}" class="nav-link"><span class="icon"><i class="fas fa-list"></i></span>My Debates</a>
                 <a href="{% url 'debates:my_results' %}" class="nav-link"><span class="icon"><i class="fas fa-trophy"></i></span>My Results</a>
             </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Monitoring</div>
-                <a href="{% url 'monitoring:download_package' %}" class="nav-link"><span class="icon"><i class="fas fa-magic"></i></span>One-Time Setup</a>
-            </div>
             {% endif %}
-            {% if request.user.is_teacher or request.user.is_admin_user %}
+            {% if request.user.is_teacher or request.user.is_admin_user or request.user.is_cr %}
             <div class="nav-section">
                 <div class="nav-section-title">Management</div>
+                {% if request.user.is_teacher or request.user.is_admin_user %}
                 <a href="{% url 'accounts:student_create' %}" class="nav-link"><span class="icon"><i class="fas fa-user-graduate"></i></span>Create Student</a>
                 <a href="{% url 'accounts:user_list' %}?role=student" class="nav-link"><span class="icon"><i class="fas fa-users"></i></span>Student List</a>
+                {% endif %}
+                
+                {% if request.user.is_teacher or request.user.is_admin_user %}
                 <a href="{% url 'debates:create' %}" class="nav-link"><span class="icon"><i class="fas fa-plus-circle"></i></span>Create Debate</a>
+                {% endif %}
+                
                 <a href="{% url 'portal:notice_create' %}" class="nav-link"><span class="icon"><i class="fas fa-edit"></i></span>Post Notice</a>
+                
+                {% if request.user.is_teacher or request.user.is_admin_user %}
                 <a href="{% url 'portal:assignment_create' %}" class="nav-link"><span class="icon"><i class="fas fa-file-alt"></i></span>New Assignment</a>
                 <a href="{% url 'exams:teacher_quiz_list' %}" class="nav-link"><span class="icon"><i class="fas fa-edit"></i></span>Manage Exams</a>
-                <a href="{% url 'monitoring:dashboard' %}" class="nav-link"><span class="icon"><i class="fas fa-chart-line"></i></span>Monitoring</a>
+                {% endif %}
+                
+                {% if request.user.is_teacher or request.user.is_admin_user %}
+                <a href="{% url 'monitoring:dashboard' %}" class="nav-link"><span class="icon"><i class="fas fa-chart-line"></i></span>Monitoring Dashboard</a>
+                {% endif %}
             </div>
             {% endif %}
             {% if request.user.is_admin_user %}

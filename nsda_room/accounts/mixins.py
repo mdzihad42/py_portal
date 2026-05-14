@@ -29,6 +29,22 @@ class AdminRequiredMixin(RoleRequiredMixin):
     required_role = 'admin'
 
 
+class CRRequiredMixin(RoleRequiredMixin):
+    required_role = 'cr'
+
+
+class StaffOrCRRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Allow Teachers, Admins, and Class Representatives."""
+
+    def test_func(self):
+        return self.request.user.role in ('teacher', 'admin', 'cr')
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return redirect('accounts:login')
+        return redirect('portal:dashboard')
+
+
 class TeacherOrAdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow both teachers and admins."""
 

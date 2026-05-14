@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Add Fine — NSDA Portal{% endblock %}
+{% block page_title %}{% if object %}Edit Fine{% else %}Add New Fine{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-center animate-fade-in">
+    <div class="form-card-centered">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-file-invoice-dollar" style="color:var(--accent);"></i> Fine Details</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label for="id_student">Select Student</label>
+                        <select name="student" id="id_student" class="form-control" required>
+                            <option value="">---------</option>
+                            {% for user in form.fields.student.queryset %}
+                                <option value="{{ user.id }}" {% if form.student.value == user.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ user.username }} ({{ user.get_full_name }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.student.errors %}<div class="form-error">{{ form.student.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_amount">Amount (BDT)</label>
+                        <div style="display:flex;">
+                            <span style="background:#f8fafc; border:1px solid var(--border-color); border-right:none; padding:12px; border-radius:10px 0 0 10px; color:var(--text-muted);">৳</span>
+                            <input type="number" name="amount" id="id_amount" step="0.01" class="form-control" style="border-radius:0 10px 10px 0;" value="{{ form.amount.value|default:'' }}" required>
+                        </div>
+                        {% if form.amount.errors %}<div class="form-error">{{ form.amount.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_reason">Reason for Fine</label>
+                        <textarea name="reason" id="id_reason" class="form-control" rows="4" placeholder="e.g. Late submission, Misbehavior, etc." required>{{ form.reason.value|default:'' }}</textarea>
+                        {% if form.reason.errors %}<div class="form-error">{{ form.reason.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Record
+                        </button>
+                        <a href="{% url 'finance:fine_list' %}" class="btn btn-secondary" style="justify-content:center;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="alert alert-info" style="margin-top: 24px;">
+            <i class="fas fa-info-circle"></i> 
+            <strong>Note:</strong> Recorded fines will be visible on the student's dashboard immediately.
+        </div>
+    </div>
+</div>
+{% endblock %}

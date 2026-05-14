@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
 from .models import Fine
-from accounts.mixins import TeacherOrAdminRequiredMixin
+from accounts.mixins import TeacherOrAdminRequiredMixin, StaffOrCRRequiredMixin
 
 class FineListView(LoginRequiredMixin, ListView):
     model = Fine
@@ -13,11 +13,11 @@ class FineListView(LoginRequiredMixin, ListView):
     context_object_name = 'fines'
 
     def get_queryset(self):
-        if self.request.user.is_teacher or self.request.user.is_admin_user:
+        if self.request.user.role in ('teacher', 'admin', 'cr'):
             return Fine.objects.all()
         return Fine.objects.filter(student=self.request.user)
 
-class FineCreateView(TeacherOrAdminRequiredMixin, CreateView):
+class FineCreateView(StaffOrCRRequiredMixin, CreateView):
     model = Fine
     fields = ['student', 'amount', 'reason']
     template_name = 'finance/fine_form.html'
@@ -28,7 +28,7 @@ class FineCreateView(TeacherOrAdminRequiredMixin, CreateView):
         messages.success(self.request, f"Fine added for {form.instance.student.username}")
         return super().form_valid(form)
 
-class MarkPaidView(TeacherOrAdminRequiredMixin, View):
+class MarkPaidView(StaffOrCRRequiredMixin, View):
     def post(self, request, pk):
         fine = get_object_or_404(Fine, pk=pk)
         fine.is_paid = True

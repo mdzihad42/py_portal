@@ -10,6 +10,7 @@ from django.db.models import Count, Avg, Q, Sum
 from accounts.mixins import (
     StudentRequiredMixin, TeacherRequiredMixin,
     AdminRequiredMixin, TeacherOrAdminRequiredMixin,
+    StaffOrCRRequiredMixin,
 )
 from accounts.models import User
 from .models import Notice, SharedFile, Assignment, AssignmentSubmission
@@ -185,7 +186,7 @@ class NoticeListView(LoginRequiredMixin, ListView):
         return qs
 
 
-class NoticeCreateView(TeacherOrAdminRequiredMixin, CreateView):
+class NoticeCreateView(StaffOrCRRequiredMixin, CreateView):
     model = Notice
     form_class = NoticeForm
     template_name = 'portal/notice_form.html'

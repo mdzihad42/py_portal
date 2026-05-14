@@ -8,6 +8,7 @@ class User(AbstractUser):
 
     class Role(models.TextChoices):
         STUDENT = 'student', 'Student'
+        CR = 'cr', 'Class Representative'
         TEACHER = 'teacher', 'Teacher'
         ADMIN = 'admin', 'Admin'
 
@@ -34,12 +35,21 @@ class User(AbstractUser):
         return self.role == self.Role.STUDENT
 
     @property
+    def is_cr(self):
+        return self.role == self.Role.CR
+
+    @property
     def is_teacher(self):
         return self.role == self.Role.TEACHER
 
     @property
     def is_admin_user(self):
         return self.role == self.Role.ADMIN
+
+    @property
+    def can_manage_records(self):
+        """CR, Teacher, and Admin can manage notices/fines."""
+        return self.role in [self.Role.CR, self.Role.TEACHER, self.Role.ADMIN]
 
     def get_absolute_url(self):
         return reverse('accounts:profile')

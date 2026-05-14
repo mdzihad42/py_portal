@@ -8,32 +8,104 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body>
-<div class="auth-wrapper">
-    <div class="auth-card" style="max-width:540px;">
+<body style="background: var(--bg-secondary);">
+<div class="auth-wrapper" style="padding: 40px 0;">
+    <div class="auth-card" style="max-width: 700px; padding: 40px;">
         <div class="auth-logo">
             <div class="logo">N</div>
-            <h1>Create Account</h1>
-            <p class="subtitle">Join the NSDA Portal as a Teacher</p>
+            <h1 style="color:var(--primary-navy); margin-bottom: 5px;">Create Account</h1>
+            <p class="subtitle">Join as a Teacher to manage your students</p>
         </div>
+        
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}{% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}{% endif %}
-                {% if field.help_text %}<div class="text-sm text-muted" style="margin-top:4px;">{{ field.help_text }}</div>{% endif %}
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Row 1: Names -->
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+                
+                <!-- Row 2: Identity -->
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    {{ form.username }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email Address</label>
+                    {{ form.email }}
+                </div>
+                
+                <!-- Row 3: Passwords -->
+                <div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}">Password</label>
+                    {{ form.password1 }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    {{ form.password2 }}
+                </div>
+
+                <!-- Row 4: Contact & School -->
+                <div class="form-group">
+                    <label for="{{ form.phone.id_for_label }}">Phone Number</label>
+                    {{ form.phone }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.school.id_for_label }}">School/Institute</label>
+                    {{ form.school }}
+                </div>
             </div>
-            {% endfor %}
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-user-plus"></i> Create Account</button>
+
+            <!-- Full Width Fields -->
+            <div class="form-group">
+                <label for="{{ form.bio.id_for_label }}">Short Bio</label>
+                {{ form.bio }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.profile_picture.id_for_label }}">Profile Picture</label>
+                {{ form.profile_picture }}
+            </div>
+
+            {% if form.errors %}
+                <div class="alert alert-danger" style="margin-bottom: 20px;">
+                    <ul style="padding-left: 20px; margin: 0;">
+                    {% for field in form %}
+                        {% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="form-actions" style="margin-top: 30px;">
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:15px; font-size:16px;">
+                    <i class="fas fa-user-plus"></i> Complete Registration
+                </button>
             </div>
         </form>
-        <div class="auth-footer">
-            Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a>
+        
+        <div class="auth-footer" style="margin-top: 25px;">
+            Already have an account? <a href="{% url 'accounts:login' %}" style="color:var(--accent); font-weight:700;">Sign in here</a>
         </div>
     </div>
 </div>
+
+<style>
+    /* Specific overrides for this multi-column form */
+    @media (max-width: 600px) {
+        .auth-card { margin: 10px; padding: 25px !important; }
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+        }
+    }
+    textarea { height: 80px !important; }
+</style>
 </body>
 </html>

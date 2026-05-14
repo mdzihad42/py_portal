@@ -1,27 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Create Student — NSDA Portal{% endblock %}
 {% block page_title %}Create Student Profile{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width:600px;">
-    <div class="card-header">
-        <h3><i class="fas fa-user-graduate"></i> Add New Student</h3>
-    </div>
-    <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.help_text %}<div class="text-sm text-muted" style="margin-top:4px;">{{ field.help_text }}</div>{% endif %}
-                {% if field.errors %}{% for e in field.errors %}<div class="form-error">{{ e }}</div>{% endfor %}{% endif %}
+<div class="container-center animate-fade-in">
+    <div class="form-card-centered">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-user-graduate" style="color:var(--accent);"></i> Add New Student</h3>
             </div>
-            {% endfor %}
-            <div style="display:flex;gap:12px;margin-top:24px;">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle"></i> Create Student</button>
-                <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary">Cancel</a>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <small style="display:block; margin-top:4px; color:var(--text-muted);">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <div class="form-actions" style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i> Create Student
+                        </button>
+                        <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary" style="justify-content:center;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}
