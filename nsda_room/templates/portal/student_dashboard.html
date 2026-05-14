@@ -1,47 +1,162 @@
 {% extends "base.html" %}
 {% block title %}Student Dashboard — NSDA Portal{% endblock %}
-{% block page_title %}Student Dashboard{% endblock %}
+{% block page_title %}Student Overview{% endblock %}
+
 {% block content %}
-<div class="stats-grid">
-    <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-gavel"></i></div><div class="stat-value">{{ total_debates }}</div><div class="stat-label">Enrolled Debates</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-desktop"></i></div><div class="stat-value">{{ total_active_hours }}h</div><div class="stat-label">Monitoring Active</div></div>
-    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-wallet"></i></div><div class="stat-value">৳{{ unpaid_fines }}</div><div class="stat-label">Unpaid Fines</div></div>
-    <div class="stat-card"><div class="stat-icon cyan"><i class="fas fa-tasks"></i></div><div class="stat-value">{{ pending_assignments|length }}</div><div class="stat-label">Assignments</div></div>
-</div>
-<div class="grid-2">
-    <div class="card">
-        <div class="card-header"><h3><i class="fas fa-gavel" style="color:var(--accent-light);margin-right:8px;"></i>Upcoming Debates</h3><a href="{% url 'debates:list' %}" class="btn btn-sm btn-secondary">View All</a></div>
-        <div class="card-body">
-            {% for reg in my_debates %}
-            <div style="padding:12px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
-                <div><a href="{% url 'debates:detail' reg.debate.pk %}" style="font-weight:600;">{{ reg.debate.title }}</a><br><span class="text-sm text-muted">{{ reg.debate.date|date:"M d, Y" }} at {{ reg.debate.time|time:"H:i" }}</span></div>
-                <span class="badge badge-{% if reg.debate.status == 'upcoming' %}info{% elif reg.debate.status == 'completed' %}success{% else %}warning{% endif %}">{{ reg.debate.get_status_display }}</span>
+<div class="animate-fade-in">
+    <!-- Welcome Header -->
+    <div class="card mb-24" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; border: none;">
+        <div class="card-body flex-between py-24">
+            <div>
+                <h2 style="font-size: 24px; font-weight: 800;">Welcome back, {{ request.user.first_name|default:request.user.username }}! 👋</h2>
+                <p style="opacity: 0.9;">Ready to sharpen your debate skills today?</p>
             </div>
-            {% empty %}<div class="empty-state"><div class="icon"><i class="fas fa-gavel"></i></div><h3>No debates yet</h3><p>Browse available debates to register</p></div>{% endfor %}
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-header"><h3><i class="fas fa-trophy" style="color:var(--warning);margin-right:8px;"></i>Recent Results</h3><a href="{% url 'debates:my_results' %}" class="btn btn-sm btn-secondary">View All</a></div>
-        <div class="card-body">
-            {% for result in my_results %}
-            <div style="padding:12px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
-                <div><strong>{{ result.debate.title }}</strong><br><span class="text-sm text-muted">{{ result.created_at|date:"M d, Y" }}</span></div>
-                <div style="text-align:right;"><span style="font-size:20px;font-weight:700;color:var(--success);">{{ result.score }}</span><br>{% if result.rank %}<span class="text-sm text-muted">Rank #{{ result.rank }}</span>{% endif %}</div>
+            <div class="text-right">
+                <div class="text-sm opacity-75">Current Rank</div>
+                <div style="font-size: 20px; font-weight: 700;">#{{ request.user.id }} Student</div>
             </div>
-            {% empty %}<div class="empty-state"><div class="icon"><i class="fas fa-trophy"></i></div><h3>No results yet</h3><p>Results will appear after debates</p></div>{% endfor %}
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid mb-24">
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-calendar-check"></i></div>
+            <div class="stat-value">{{ attendance_percent }}%</div>
+            <div class="stat-label">Manual Attendance</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-stopwatch"></i></div>
+            <div class="stat-value">{{ total_active_hours }}h</div>
+            <div class="stat-label">Monitoring Active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fas fa-wallet"></i></div>
+            <div class="stat-value">৳{{ unpaid_fines }}</div>
+            <div class="stat-label">Unpaid Fines</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value">৳{{ paid_fines }}</div>
+            <div class="stat-label">Paid Fines</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon cyan"><i class="fas fa-star"></i></div>
+            <div class="stat-value">{{ avg_score|floatformat:1 }}</div>
+            <div class="stat-label">Avg. Debate Score</div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <!-- Monitoring Control Card -->
+        <div class="card">
+            <div class="card-header flex-between">
+                <h3><i class="fas fa-desktop" style="color:var(--accent);"></i> Desktop Monitoring</h3>
+                <span class="badge badge-primary">Client App</span>
+            </div>
+            <div class="card-body">
+                <div class="flex-center gap-16" style="justify-content: flex-start; align-items: flex-start;">
+                    <div style="font-size: 32px; color: var(--success);"><i class="fas fa-shield-alt"></i></div>
+                    <div>
+                        <p class="text-sm mb-12">Monitoring is controlled via the <strong>NSDA Monitor</strong> desktop application. You can toggle monitoring ON or OFF directly from the app's dashboard to protect your privacy during private sessions.</p>
+                        <div class="flex-center gap-8" style="justify-content: flex-start;">
+                            {% if latest_agent %}
+                            <a href="{{ latest_agent.file.url }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-download"></i> Download NSDA Monitor
+                            </a>
+                            {% else %}
+                            <div class="dot present"></div> <span class="text-xs text-muted">Use the desktop app to START/STOP</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Results -->
+        <div class="card">
+            <div class="card-header flex-between">
+                <h3><i class="fas fa-trophy" style="color:var(--warning);"></i> Recent Results</h3>
+                <a href="{% url 'debates:my_results' %}" class="btn btn-sm btn-secondary">View All</a>
+            </div>
+            <div class="card-body">
+                {% for result in my_results %}
+                <div class="list-item">
+                    <div class="flex-between">
+                        <div>
+                            <strong>{{ result.debate.title }}</strong>
+                            <div class="text-xs text-muted">{{ result.created_at|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="text-right">
+                            <div style="font-weight: 800; color: var(--success); font-size: 18px;">{{ result.score }}</div>
+                            {% if result.rank %}<div class="text-xs text-muted">Rank #{{ result.rank }}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">No results yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Notices & Assignments -->
+    <div class="grid-2 mt-24">
+        <div class="card">
+            <div class="card-header flex-between">
+                <h3><i class="fas fa-bullhorn" style="color:var(--info);"></i> Recent Notices</h3>
+                <a href="{% url 'portal:notice_list' %}" class="btn btn-sm btn-secondary">View All</a>
+            </div>
+            <div class="card-body">
+                {% for notice in notices %}
+                <div class="notice-card-small mb-12">
+                    <div class="title">{{ notice.title }}</div>
+                    <div class="meta">{{ notice.posted_by.get_full_name }} — {{ notice.created_at|timesince }} ago</div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No notices available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header flex-between">
+                <h3><i class="fas fa-tasks" style="color:var(--accent-light);"></i> Pending Assignments</h3>
+                <a href="{% url 'portal:assignment_list' %}" class="btn btn-sm btn-secondary">View All</a>
+            </div>
+            <div class="card-body">
+                {% for assignment in pending_assignments %}
+                <div class="list-item">
+                    <div class="flex-between">
+                        <div>
+                            <strong>{{ assignment.title }}</strong>
+                            <div class="text-xs text-danger">Due: {{ assignment.due_date|date:"M d, H:i" }}</div>
+                        </div>
+                        <a href="{% url 'portal:assignment_detail' assignment.pk %}" class="btn btn-xs btn-primary">Submit</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state small">No pending assignments! 🎉</div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
-<div class="card mt-16">
-    <div class="card-header"><h3><i class="fas fa-bullhorn" style="color:var(--info);margin-right:8px;"></i>Recent Notices</h3></div>
-    <div class="card-body">
-        {% for notice in notices %}
-        <div class="notice-card card mb-16 {% if notice.is_pinned %}pinned{% endif %}">
-            <h4>{% if notice.is_pinned %}<i class="fas fa-thumbtack" style="color:var(--warning);margin-right:6px;"></i>{% endif %}{{ notice.title }}</h4>
-            <div class="meta">{{ notice.posted_by.get_full_name }} — {{ notice.created_at|date:"M d, Y" }}</div>
-            <p class="text-sm">{{ notice.content|truncatewords:30 }}</p>
-        </div>
-        {% empty %}<p class="text-muted">No notices available.</p>{% endfor %}
-    </div>
-</div>
+
+<style>
+    .notice-card-small {
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+        border-left: 4px solid var(--info);
+    }
+    .notice-card-small .title { font-weight: 700; color: var(--primary-navy); font-size: 14px; }
+    .notice-card-small .meta { font-size: 11px; color: var(--text-muted); }
+    
+    .list-item {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .list-item:last-child { border-bottom: none; }
+</style>
 {% endblock %}

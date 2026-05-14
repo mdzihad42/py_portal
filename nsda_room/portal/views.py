@@ -102,15 +102,28 @@ class StudentDashboardView(StudentRequiredMixin, View):
             Q(target_role='all') | Q(target_role='student')
         )[:5]
 
-        from monitoring.models import Attendance
+        from monitoring.models import Attendance, MonitoringAgentApp
+        from attendance.models import Attendance as ManualAttendance
         from finance.models import Fine
+
+        latest_agent = MonitoringAgentApp.objects.filter(is_active=True).order_by('-uploaded_at').first()
 
         total_active_seconds = Attendance.objects.filter(
             student=request.user
         ).aggregate(total=Sum('total_active_seconds'))['total'] or 0
         
+        # Manual Attendance Stats
+        manual_atts = ManualAttendance.objects.filter(student=request.user)
+        total_days = manual_atts.count()
+        present_days = manual_atts.filter(status='PRESENT').count()
+        attendance_percent = round((present_days / total_days * 100), 1) if total_days > 0 else 0
+
         unpaid_fines = Fine.objects.filter(
             student=request.user, is_paid=False
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        paid_fines = Fine.objects.filter(
+            student=request.user, is_paid=True
         ).aggregate(total=Sum('amount'))['total'] or 0
 
         context = {
@@ -123,7 +136,10 @@ class StudentDashboardView(StudentRequiredMixin, View):
                 avg=Avg('score')
             )['avg'] or 0,
             'total_active_hours': round(total_active_seconds / 3600, 1),
+            'attendance_percent': attendance_percent,
             'unpaid_fines': unpaid_fines,
+            'paid_fines': paid_fines,
+            'latest_agent': latest_agent,
         }
         return render(request, 'portal/student_dashboard.html', context)
 

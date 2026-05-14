@@ -4,13 +4,27 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 
-from .models import MonitoringSession
+from .models import MonitoringSession, MonitoringAgentApp
 from .serializers import (
     ScreenshotSerializer, AppUsageSerializer,
     KeyboardActivitySerializer, SessionSerializer,
 )
 from .alert_engine import check_for_alerts
 from .utils import update_student_attendance
+
+class CheckUpdateAPI(APIView):
+    """Check for latest desktop agent version."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        latest = MonitoringAgentApp.objects.filter(is_active=True).order_by('-uploaded_at').first()
+        if latest:
+            return Response({
+                'version': latest.version,
+                'download_url': request.build_absolute_uri(latest.file.url),
+                'uploaded_at': latest.uploaded_at
+            })
+        return Response({'error': 'No agent found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class StartSessionAPI(APIView):

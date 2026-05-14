@@ -27,6 +27,7 @@
                 <a href="{% url 'portal:assignment_list' %}" class="nav-link"><span class="icon"><i class="fas fa-tasks"></i></span>Assignments</a>
                 <a href="{% url 'exams:quiz_list' %}" class="nav-link"><span class="icon"><i class="fas fa-file-signature"></i></span>Exams</a>
                 <a href="{% url 'portal:leaderboard' %}" class="nav-link"><span class="icon"><i class="fas fa-trophy"></i></span>Leaderboard</a>
+                <a href="{% url 'finance:fine_list' %}" class="nav-link"><span class="icon"><i class="fas fa-wallet"></i></span>Fines</a>
                 <a href="{% url 'attendance:prizes' %}" class="nav-link"><span class="icon"><i class="fas fa-award"></i></span>Monthly Prizes</a>
             </div>
             {% if request.user.is_student or request.user.is_cr %}
@@ -56,6 +57,10 @@
                 {% if request.user.is_teacher or request.user.is_admin_user %}
                 <a href="{% url 'portal:assignment_create' %}" class="nav-link"><span class="icon"><i class="fas fa-file-alt"></i></span>New Assignment</a>
                 <a href="{% url 'exams:teacher_quiz_list' %}" class="nav-link"><span class="icon"><i class="fas fa-edit"></i></span>Manage Exams</a>
+                {% endif %}
+                
+                {% if request.user.is_teacher or request.user.is_admin_user or request.user.is_cr %}
+                <a href="{% url 'finance:fine_create' %}" class="nav-link"><span class="icon"><i class="fas fa-plus-circle"></i></span>Add Fine</a>
                 {% endif %}
                 
                 {% if request.user.is_teacher or request.user.is_admin_user %}

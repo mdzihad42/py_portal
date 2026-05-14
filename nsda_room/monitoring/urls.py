@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/screenshot/', api_views.ScreenshotUploadAPI.as_view(), name='api_screenshot'),
     path('api/app-usage/', api_views.AppUsageAPI.as_view(), name='api_app_usage'),
     path('api/keyboard/', api_views.KeyboardActivityAPI.as_view(), name='api_keyboard'),
+    path('api/check-update/', api_views.CheckUpdateAPI.as_view(), name='api_check_update'),
 
     # Download monitoring tools
     path('download/agent/', views.DownloadAgentView.as_view(), name='download_agent'),

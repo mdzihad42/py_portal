@@ -165,3 +165,17 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.date} ({'Present' if self.is_present else 'Absent'})"
+
+class MonitoringAgentApp(models.Model):
+    """Store the compiled monitoring agent executable."""
+    version = models.CharField(max_length=20, default="1.0.0")
+    file = models.FileField(upload_to='agent_builds/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Desktop Agent Package"
+        verbose_name_plural = "Desktop Agent Packages"
+
+    def __str__(self):
+        return f"NSDA Monitor v{self.version} ({self.uploaded_at.strftime('%Y-%m-%d')})"
