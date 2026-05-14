@@ -9,6 +9,13 @@ class Quiz(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     duration_minutes = models.PositiveIntegerField(default=30, help_text="Duration of the exam in minutes")
     is_active = models.BooleanField(default=True)
+    target_batch = models.ForeignKey(
+        'accounts.Batch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='quizzes'
+    )
     total_marks = models.PositiveIntegerField(default=0)
 
     def __str__(self):

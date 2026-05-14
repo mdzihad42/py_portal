@@ -13,7 +13,11 @@ class QuizListView(ListView):
     context_object_name = 'quizzes'
 
     def get_queryset(self):
-        return Quiz.objects.filter(is_active=True).order_by('-created_at')
+        qs = Quiz.objects.filter(is_active=True)
+        if self.request.user.is_authenticated and self.request.user.is_student:
+            from django.db.models import Q
+            qs = qs.filter(Q(target_batch=self.request.user.batch) | Q(target_batch__isnull=True))
+        return qs.order_by('-created_at')
 
 class QuizDetailView(DetailView):
     model = Quiz
@@ -79,7 +83,15 @@ class QuizResultsView(TeacherOrAdminRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['submissions'] = self.object.submissions.select_related('student').order_by('-score')
+        batch_id = self.request.GET.get('batch')
+        submissions = self.object.submissions.select_related('student')
+        
+        if batch_id:
+            submissions = submissions.filter(student__batch_id=batch_id)
+            
+        context['submissions'] = submissions.order_by('-score')
+        from accounts.models import Batch
+        context['batches'] = Batch.objects.filter(is_active=True)
         return context
 
 class ResetSubmissionView(TeacherOrAdminRequiredMixin, View):
@@ -126,7 +138,7 @@ class AddQuestionView(TeacherOrAdminRequiredMixin, View):
 # Teacher views
 class QuizCreateView(TeacherOrAdminRequiredMixin, CreateView):
     model = Quiz
-    fields = ['title', 'description', 'duration_minutes', 'total_marks']
+    fields = ['title', 'description', 'duration_minutes', 'total_marks', 'target_batch']
     template_name = 'exams/quiz_form.html'
     success_url = '/exams/manage/'
 

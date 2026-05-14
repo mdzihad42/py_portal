@@ -28,6 +28,10 @@ class Attendance(models.Model):
     remarks = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Monitoring Fields (Automated)
+    total_active_seconds = models.PositiveIntegerField(default=0)
+    last_seen = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('student', 'date')

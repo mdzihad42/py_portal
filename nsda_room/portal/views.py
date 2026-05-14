@@ -31,7 +31,14 @@ class LeaderboardView(ListView):
         from exams.models import QuizSubmission
         from debates.models import DebateResult
         
+        batch_id = self.request.GET.get('batch')
         students = User.objects.filter(role='student')
+        
+        if batch_id:
+            students = students.filter(batch_id=batch_id)
+        elif self.request.user.is_authenticated and self.request.user.is_student:
+            students = students.filter(batch=self.request.user.batch)
+            
         leaderboard_data = []
         
         for student in students:
@@ -94,28 +101,30 @@ class StudentDashboardView(StudentRequiredMixin, View):
 
         pending_assignments = Assignment.objects.filter(
             due_date__gte=timezone.now()
+        ).filter(
+            Q(target_batch=request.user.batch) | Q(target_batch__isnull=True)
         ).exclude(
             submissions__student=request.user
         )[:5]
 
         notices = Notice.objects.filter(
             Q(target_role='all') | Q(target_role='student')
+        ).filter(
+            Q(target_batch=request.user.batch) | Q(target_batch__isnull=True)
         )[:5]
 
-        from monitoring.models import Attendance, MonitoringAgentApp
-        from attendance.models import Attendance as ManualAttendance
+        from attendance.models import Attendance
         from finance.models import Fine
+        from monitoring.models import MonitoringAgentApp
 
         latest_agent = MonitoringAgentApp.objects.filter(is_active=True).order_by('-uploaded_at').first()
 
-        total_active_seconds = Attendance.objects.filter(
-            student=request.user
-        ).aggregate(total=Sum('total_active_seconds'))['total'] or 0
+        # Unified Attendance Stats
+        my_atts = Attendance.objects.filter(student=request.user)
+        total_active_seconds = my_atts.aggregate(total=Sum('total_active_seconds'))['total'] or 0
         
-        # Manual Attendance Stats
-        manual_atts = ManualAttendance.objects.filter(student=request.user)
-        total_days = manual_atts.count()
-        present_days = manual_atts.filter(status='PRESENT').count()
+        total_days = my_atts.count()
+        present_days = my_atts.filter(status='PRESENT').count()
         attendance_percent = round((present_days / total_days * 100), 1) if total_days > 0 else 0
 
         unpaid_fines = Fine.objects.filter(

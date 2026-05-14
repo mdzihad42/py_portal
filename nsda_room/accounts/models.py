@@ -3,6 +3,24 @@ from django.db import models
 from django.urls import reverse
 
 
+class Batch(models.Model):
+    """Educational batch or group (e.g. Batch-1, Batch-2)."""
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name_plural = "Batches"
+
+    def __get_student_count(self):
+        return self.students.count()
+    student_count = property(__get_student_count)
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractUser):
     """Custom user model with role-based access."""
 
@@ -16,6 +34,13 @@ class User(AbstractUser):
         max_length=10,
         choices=Role.choices,
         default=Role.STUDENT,
+    )
+    batch = models.ForeignKey(
+        Batch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students'
     )
     profile_picture = models.ImageField(
         upload_to='profiles/',
@@ -55,4 +80,5 @@ class User(AbstractUser):
         return reverse('accounts:profile')
 
     def __str__(self):
-        return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
+        batch_info = f" [{self.batch.name}]" if self.batch else ""
+        return f"{self.get_full_name() or self.username} ({self.get_role_display()}){batch_info}"

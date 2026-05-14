@@ -1,5 +1,5 @@
 from django.utils import timezone
-from .models import Attendance
+from attendance.models import Attendance
 from django.db.models import F
 
 def update_student_attendance(student, active_seconds=0):
@@ -13,6 +13,7 @@ def update_student_attendance(student, active_seconds=0):
     if active_seconds > 0:
         attendance.total_active_seconds = F('total_active_seconds') + active_seconds
     
-    attendance.is_present = True
+    attendance.status = 'PRESENT'
+    attendance.last_seen = timezone.now()
     attendance.save()
     return attendance

@@ -146,25 +146,6 @@ class ActivityAlert(models.Model):
         return f"Alert: {self.student.username} - {self.get_alert_type_display()}"
 
 
-class Attendance(models.Model):
-    """Daily attendance record for a student."""
-
-    student = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='attendance_records',
-    )
-    date = models.DateField(auto_now_add=True)
-    is_present = models.BooleanField(default=True)
-    total_active_seconds = models.PositiveIntegerField(default=0)
-    last_seen = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ['student', 'date']
-        ordering = ['-date']
-
-    def __str__(self):
-        return f"{self.student.username} - {self.date} ({'Present' if self.is_present else 'Absent'})"
 
 class MonitoringAgentApp(models.Model):
     """Store the compiled monitoring agent executable."""

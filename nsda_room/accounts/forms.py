@@ -10,7 +10,7 @@ class StudentRegistrationForm(UserCreationForm):
         model = User
         fields = [
             'username', 'email', 'first_name', 'last_name',
-            'password1', 'password2', 'phone', 'grade_level',
+            'batch', 'phone', 'grade_level',
             'school', 'date_of_birth', 'profile_picture',
         ]
         widgets = {
@@ -70,7 +70,7 @@ class ProfileUpdateForm(forms.ModelForm):
         model = User
         fields = [
             'first_name', 'last_name', 'email', 'phone',
-            'bio', 'grade_level', 'school', 'date_of_birth',
+            'batch', 'bio', 'grade_level', 'school', 'date_of_birth',
             'profile_picture',
         ]
         widgets = {

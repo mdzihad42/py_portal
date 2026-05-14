@@ -17,6 +17,13 @@ class Notice(models.Model):
         choices=[('all', 'All'), ('student', 'Students'), ('teacher', 'Teachers')],
         default='all',
     )
+    target_batch = models.ForeignKey(
+        'accounts.Batch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notices'
+    )
     is_pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -69,6 +76,13 @@ class Assignment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='created_assignments',
+    )
+    target_batch = models.ForeignKey(
+        'accounts.Batch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assignments'
     )
     due_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
